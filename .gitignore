@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+data/raw/
+data/*.pdf
+data/*.PDF
+data/processed/*.jsonl
+data/qdrant_storage/
+.pytest_cache/
+.ruff_cache/
+logs/
