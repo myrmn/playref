@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from backend.app.api.schemas import (
     ChatRequest,
     ConversationResponse,
+    ConversationSummary,
     FeedbackRequest,
     FeedbackResponse,
     HealthResponse,
@@ -115,12 +116,14 @@ async def chat_endpoint(
                 "clarifying_question": None,
                 "language": target_lang,
             }
+            bot_msg_id = str(uuid.uuid4())
             yield f"event: answer\ndata: {json.dumps(final_obj)}\n\n"
-            yield f"event: done\ndata: {json.dumps({'total_ms': round((time.perf_counter() - start_total) * 1000, 1)})}\n\n"
+            yield f"event: done\ndata: {json.dumps({'total_ms': round((time.perf_counter() - start_total) * 1000, 1), 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
 
             # Save messages
             msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
             msg_bot = Message(
+                id=bot_msg_id,
                 conversation_id=conv_id,
                 role="assistant",
                 content=redirect_text,
@@ -175,13 +178,15 @@ async def chat_endpoint(
             "rerank_ms": rerank_ms,
             "total_ms": total_ms,
         }
-        yield f"event: done\ndata: {json.dumps({'timings': timings})}\n\n"
+        bot_msg_id = str(uuid.uuid4())
+        yield f"event: done\ndata: {json.dumps({'timings': timings, 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
 
         # Persist to database
         if final_answer_payload:
             chunk_ids = [sc.chunk.chunk_id for sc in reranked]
             msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
             msg_bot = Message(
+                id=bot_msg_id,
                 conversation_id=conv_id,
                 role="assistant",
                 content=final_answer_payload.get("short_answer", ""),
@@ -229,8 +234,10 @@ async def chat_endpoint(
         answer_dict = answer.model_dump()
 
     # Save to db
+    bot_msg_id = str(uuid.uuid4())
     msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
     msg_bot = Message(
+        id=bot_msg_id,
         conversation_id=conv_id,
         role="assistant",
         content=answer_dict.get("short_answer", ""),
@@ -242,7 +249,27 @@ async def chat_endpoint(
     db.add_all([msg_user, msg_bot])
     await db.commit()
 
-    return {"conversation_id": conv_id, "answer": answer_dict}
+    return {"conversation_id": conv_id, "message_id": bot_msg_id, "answer": answer_dict}
+
+
+@api_router.get("/conversations", response_model=list[ConversationSummary])
+async def list_conversations(limit: int = 20, db: AsyncSession = Depends(get_db)):
+    """Fetch recent conversations for the sidebar history."""
+    res = await db.execute(
+        select(Conversation)
+        .order_by(Conversation.created_at.desc())
+        .limit(limit)
+    )
+    convs = res.scalars().all()
+    return [
+        ConversationSummary(
+            id=c.id,
+            created_at=c.created_at,
+            language=c.language,
+            title=c.title,
+        )
+        for c in convs
+    ]
 
 
 @api_router.get("/conversations/{conversation_id}", response_model=ConversationResponse)

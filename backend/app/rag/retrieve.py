@@ -19,9 +19,15 @@ class ScoredChunk(BaseModel):
 class HybridRetriever:
     """Performs hybrid dense + sparse retrieval with Reciprocal Rank Fusion."""
 
-    def __init__(self, collection_name: str = settings.qdrant_collection):
+    def __init__(self, collection_name: str = settings.qdrant_collection, client=None):
         self.collection_name = collection_name
-        self.client = get_qdrant_client()
+        self._client = client
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = get_qdrant_client()
+        return self._client
 
     async def retrieve(
         self,

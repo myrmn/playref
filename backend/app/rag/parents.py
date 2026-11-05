@@ -9,10 +9,16 @@ from backend.app.ingestion.indexer import get_qdrant_client
 class ParentExpander:
     """Retrieves parent section text to expand context when helpful."""
 
-    def __init__(self, collection_name: str = settings.qdrant_collection):
+    def __init__(self, collection_name: str = settings.qdrant_collection, client=None):
         self.collection_name = collection_name
-        self.client = get_qdrant_client()
+        self._client = client
         self._cache: dict[str, str | None] = {}
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = get_qdrant_client()
+        return self._client
 
     def get_parent_text(self, parent_id: str | None) -> str | None:
         if not parent_id:

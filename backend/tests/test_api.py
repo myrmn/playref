@@ -1,9 +1,41 @@
 """Unit tests for FastAPI endpoints."""
 
+from unittest.mock import MagicMock
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from backend.app.main import app
+
+
+@pytest.fixture(autouse=True)
+def mock_qdrant_for_api_tests(monkeypatch):
+    """Mock Qdrant client to ensure hermetic unit tests."""
+    mock_client = MagicMock()
+    mock_points = [
+        MagicMock(payload={"law_number": i, "law_title": f"Law {i} Title"})
+        for i in range(1, 18)
+    ]
+    mock_chunk = MagicMock(
+        payload={
+            "chunk_id": "law12-s1-001",
+            "law_number": 12,
+            "law_title": "Fouls and Misconduct",
+            "section_path": "1. Direct free kick > Handball",
+            "page": 104,
+            "edition": "2026/27",
+            "clean_text": "A direct free kick is awarded if a player commits...",
+        }
+    )
+
+    def fake_scroll(collection_name, scroll_filter=None, limit=100, offset=None, with_payload=True):
+        if scroll_filter is not None:
+            return ([mock_chunk], None)
+        return (mock_points, None)
+
+    mock_client.scroll.side_effect = fake_scroll
+    mock_client.count.return_value = MagicMock(count=17)
+    monkeypatch.setattr("backend.app.api.routes.get_qdrant_client", lambda: mock_client)
 
 
 @pytest.mark.asyncio

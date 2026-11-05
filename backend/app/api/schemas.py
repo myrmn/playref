@@ -39,6 +39,13 @@ class MessageResponse(BaseModel):
     created_at: datetime
 
 
+class ConversationSummary(BaseModel):
+    id: str
+    created_at: datetime
+    language: str
+    title: str | None
+
+
 class ConversationResponse(BaseModel):
     id: str
     created_at: datetime
