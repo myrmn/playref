@@ -1,15 +1,10 @@
-"""Cross-encoder rerank client for PlayRef."""
+"""Cross-encoder rerank client for PlayRef with graceful fallback."""
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import httpx
 from pydantic import BaseModel
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 
 from backend.app.config import settings
 from backend.app.llm.errors import (
@@ -25,7 +20,7 @@ from backend.app.logger import logger
 class RerankResult(BaseModel):
     index: int
     score: float
-    text: Optional[str] = None
+    text: str | None = None
 
 
 class RerankClient:
@@ -33,10 +28,10 @@ class RerankClient:
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        model: Optional[str] = None,
-        timeout: float = 30.0,
+        base_url: str | None = None,
+        api_key: str | None = None,
+        model: str | None = None,
+        timeout: float = 3.0,
     ):
         self.base_url = (base_url or settings.llm_base_url).rstrip("/")
         self.api_key = api_key or settings.llm_api_key
@@ -50,21 +45,15 @@ class RerankClient:
     def _map_http_error(self, response: httpx.Response) -> None:
         status = response.status_code
         if status in (401, 403):
-            raise AuthenticationError(f"Auth failed ({status}): {response.text}")
+            raise AuthenticationError(f"Auth failed ({status}): {response.text[:100]}")
         if status == 429:
-            raise RateLimitError(f"Rate limited (429): {response.text}")
+            raise RateLimitError(f"Rate limited (429): {response.text[:100]}")
         if status >= 500:
-            raise ModelResponseError(f"Server error ({status}): {response.text}")
+            raise ModelResponseError(f"Server error ({status}): {response.text[:100]}")
         if status >= 400:
-            raise ModelResponseError(f"Client error ({status}): {response.text}")
+            raise ModelResponseError(f"Client error ({status}): {response.text[:100]}")
 
-    @retry(
-        retry=retry_if_exception_type((APIConnectionError, APITimeoutError, RateLimitError)),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        stop=stop_after_attempt(3),
-        reraise=True,
-    )
-    async def _post_rerank(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    async def _post_rerank(self, payload: dict[str, Any]) -> dict[str, Any]:
         url = f"{self.base_url}/rerank"
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -80,13 +69,10 @@ class RerankClient:
     async def rerank(
         self,
         query: str,
-        documents: List[str],
-        top_n: Optional[int] = None,
-    ) -> List[RerankResult]:
-        """Rerank documents against a query.
-        
-        Gracefully falls back to original order if the reranker fails.
-        """
+        documents: list[str],
+        top_n: int | None = None,
+    ) -> list[RerankResult]:
+        """Rerank documents against a query. Falls back to original order on failure."""
         if not documents:
             return []
 
@@ -107,7 +93,7 @@ class RerankClient:
                 extra={"duration_ms": duration_ms, "stage": "rerank"},
             )
 
-            results: List[RerankResult] = []
+            results: list[RerankResult] = []
             for item in data.get("results", []):
                 doc_text = None
                 if isinstance(item.get("document"), dict):
@@ -125,11 +111,10 @@ class RerankClient:
             return results[:top_k]
 
         except Exception as exc:
-            logger.error(
-                f"Reranker failed with error ({exc}); degrading gracefully to retrieval order",
-                exc_info=True,
+            logger.warning(
+                f"Reranker unavailable ({exc}); falling back gracefully to retrieval order"
             )
-            # Fallback: preserve original order with mock score 1.0 - (rank * 0.01)
+            # Fallback: preserve original order with synthetic rank score
             return [
                 RerankResult(index=i, score=round(1.0 - (i * 0.01), 3), text=documents[i])
                 for i in range(min(top_k, len(documents)))
@@ -137,4 +122,3 @@ class RerankClient:
 
 
 rerank_client = RerankClient()
-

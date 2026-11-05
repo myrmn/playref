@@ -1,9 +1,9 @@
 """LLM client layer for PlayRef."""
 
-from backend.app.llm.chat import chat_client, ChatClient
-from backend.app.llm.embeddings import embedding_client, EmbeddingClient
-from backend.app.llm.rerank import rerank_client, RerankClient
-from backend.app.llm.vision import vision_client, VisionClient
+from backend.app.llm.chat import ChatClient, chat_client
+from backend.app.llm.embeddings import EmbeddingClient, embedding_client
+from backend.app.llm.rerank import RerankClient, rerank_client
+from backend.app.llm.vision import VisionClient, vision_client
 
 __all__ = [
     "chat_client",
@@ -15,4 +15,3 @@ __all__ = [
     "vision_client",
     "VisionClient",
 ]
-

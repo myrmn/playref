@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+
 import pymupdf
 
 
@@ -13,9 +13,9 @@ class RawSection:
         law_title: str,
         section_number: str,
         section_title: str,
-        sub_section: Optional[str],
+        sub_section: str | None,
         page: int,
-        parent_id: Optional[str] = None,
+        parent_id: str | None = None,
     ):
         self.law_number = law_number
         self.law_title = law_title
@@ -24,8 +24,8 @@ class RawSection:
         self.sub_section = sub_section
         self.page = page
         self.parent_id = parent_id
-        self.paragraphs: List[str] = []
-        self.page_images: List[int] = []
+        self.paragraphs: list[str] = []
+        self.page_images: list[int] = []
 
     @property
     def section_path(self) -> str:
@@ -50,9 +50,9 @@ class PDFParser:
         text = page.get_text().strip()
         # Exclude running header lines
         lines = [
-            l.strip()
-            for l in text.split("\n")
-            if l.strip() and not l.strip().isdigit() and "Laws of the Game" not in l
+            line.strip()
+            for line in text.split("\n")
+            if line.strip() and not line.strip().isdigit() and "Laws of the Game" not in line
         ]
         body_text = " ".join(lines)
         drawings = len(page.get_drawings())
@@ -63,23 +63,23 @@ class PDFParser:
             return True
         return False
 
-    def parse(self) -> List[RawSection]:
+    def parse(self) -> list[RawSection]:
         if not self.pdf_path.exists():
             raise FileNotFoundError(f"PDF file not found at {self.pdf_path}")
 
         doc = pymupdf.open(str(self.pdf_path))
-        sections: List[RawSection] = []
+        sections: list[RawSection] = []
 
-        current_law_num: Optional[int] = None
-        current_law_title: Optional[str] = None
+        current_law_num: int | None = None
+        current_law_title: str | None = None
         current_sec_num: str = "1"
         current_sec_title: str = "General"
-        current_sub_sec: Optional[str] = None
-        current_raw_section: Optional[RawSection] = None
-        current_parent_id: Optional[str] = None
+        current_sub_sec: str | None = None
+        current_raw_section: RawSection | None = None
+        current_parent_id: str | None = None
 
         # Track diagram pages to attach to surrounding sections
-        diagram_pages: List[int] = []
+        diagram_pages: list[int] = []
 
         for pno in range(len(doc)):
             page_num = pno + 1
@@ -96,7 +96,6 @@ class PDFParser:
                 text,
             )
 
-            new_law_detected = False
             if m_law:
                 law_num = int(m_law.group(1))
                 law_title = m_law.group(2).strip()
@@ -107,7 +106,6 @@ class PDFParser:
                     current_sec_title = "Overview"
                     current_sub_sec = None
                     current_parent_id = f"law{law_num}-s1"
-                    new_law_detected = True
             elif m_var:
                 if current_law_num != 18:
                     current_law_num = 18
@@ -116,7 +114,6 @@ class PDFParser:
                     current_sec_title = "Protocol"
                     current_sub_sec = None
                     current_parent_id = "law18-s1"
-                    new_law_detected = True
             elif m_guidelines:
                 if current_law_num != 19:
                     current_law_num = 19
@@ -125,7 +122,6 @@ class PDFParser:
                     current_sec_title = "Guidelines"
                     current_sub_sec = None
                     current_parent_id = "law19-s1"
-                    new_law_detected = True
 
             # If not in a recognized Law section, skip
             if current_law_num is None:
@@ -238,4 +234,3 @@ class PDFParser:
         # Filter out empty sections
         valid_sections = [s for s in sections if s.full_text]
         return valid_sections
-

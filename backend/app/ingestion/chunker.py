@@ -1,7 +1,7 @@
 """Structure-aware chunking for PlayRef."""
 
 import re
-from typing import List
+
 import tiktoken
 
 from backend.app.config import settings
@@ -41,7 +41,7 @@ class LawChunker:
     def count_tokens(self, text: str) -> int:
         return len(self.tokenizer.encode(text))
 
-    def chunk_section(self, section: RawSection) -> List[LawChunk]:
+    def chunk_section(self, section: RawSection) -> list[LawChunk]:
         """Convert a single RawSection into one or more LawChunks."""
         clean_paragraphs = [clean_str(p) for p in section.paragraphs if clean_str(p)]
         if not clean_paragraphs:
@@ -56,8 +56,8 @@ class LawChunker:
             base_id = f"law{section.law_number}-{sec_num_slug}"
 
         # Combine paragraphs into chunks adhering to max_tokens
-        chunks: List[LawChunk] = []
-        current_paragraphs: List[str] = []
+        chunks: list[LawChunk] = []
+        current_paragraphs: list[str] = []
         current_tokens = 0
         chunk_idx = 1
 
@@ -122,10 +122,9 @@ class LawChunker:
 
         return chunks
 
-    def chunk_all(self, sections: List[RawSection]) -> List[LawChunk]:
+    def chunk_all(self, sections: list[RawSection]) -> list[LawChunk]:
         """Process all raw sections into chunks."""
-        all_chunks: List[LawChunk] = []
+        all_chunks: list[LawChunk] = []
         for sec in sections:
             all_chunks.extend(self.chunk_section(sec))
         return all_chunks
-

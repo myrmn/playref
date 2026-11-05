@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Optional
+
 from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -34,10 +34,14 @@ class Settings(BaseSettings):
 
     # Model names
     model_chat: str = Field(
-        default_factory=lambda: os.getenv("MODEL_CHAT") or os.getenv("LLM_MODEL_MAIN") or "Qwen3.6-35B-A3B"
+        default_factory=lambda: (
+            os.getenv("MODEL_CHAT") or os.getenv("LLM_MODEL_MAIN") or "Qwen3.6-35B-A3B"
+        )
     )
     model_fast: str = Field(
-        default_factory=lambda: os.getenv("MODEL_ROUTER") or os.getenv("LLM_MODEL_FAST") or "Llama-3.2-3B"
+        default_factory=lambda: (
+            os.getenv("MODEL_ROUTER") or os.getenv("LLM_MODEL_FAST") or "Llama-3.2-3B"
+        )
     )
     model_reasoning: str = Field(
         default_factory=lambda: (
@@ -45,27 +49,32 @@ class Settings(BaseSettings):
         )
     )
     model_router: str = Field(
-        default_factory=lambda: os.getenv("MODEL_ROUTER") or os.getenv("LLM_MODEL_FAST") or "Llama-3.2-3B"
+        default_factory=lambda: (
+            os.getenv("MODEL_ROUTER") or os.getenv("LLM_MODEL_FAST") or "Llama-3.2-3B"
+        )
     )
     model_vision: str = Field(default="Gemma-3-4B-IT")
     model_ocr: str = Field(default="Unlimited-OCR")
     model_embedding: str = Field(
-        default_factory=lambda: os.getenv("MODEL_EMBEDDING") or os.getenv("EMBEDDING_MODEL") or "BGE-M3-Embeddings"
+        default_factory=lambda: (
+            os.getenv("MODEL_EMBEDDING") or os.getenv("EMBEDDING_MODEL") or "BGE-M3-Embeddings"
+        )
     )
     model_rerank: str = Field(default="BGE-Reranker-v2-m3")
 
     # Embeddings
+    embedding_provider: str = Field(
+        default_factory=lambda: os.getenv("EMBEDDING_PROVIDER", "local")
+    )
     embedding_dim: int = Field(default=1024)
 
     # Qdrant & Storage
-    qdrant_url: Optional[str] = Field(default="http://localhost:6333")
-    qdrant_path: Optional[str] = Field(default="data/qdrant_storage")
+    qdrant_url: str | None = Field(default="http://localhost:6333")
+    qdrant_path: str | None = Field(default="data/qdrant_storage")
     qdrant_collection: str = Field(default="playref_laws")
 
     # Database & Redis
-    database_url: str = Field(
-        default="postgresql+asyncpg://playref:playref@localhost:5432/playref"
-    )
+    database_url: str = Field(default="postgresql+asyncpg://playref:playref@localhost:5432/playref")
     redis_url: str = Field(default="redis://localhost:6379/0")
 
     # App Parameters

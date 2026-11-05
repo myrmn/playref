@@ -5,14 +5,14 @@ import logging
 import sys
 import time
 from contextlib import contextmanager
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class JSONFormatter(logging.Formatter):
     """Formats log records as JSON objects."""
 
     def format(self, record: logging.LogRecord) -> str:
-        log_obj: Dict[str, Any] = {
+        log_obj: dict[str, Any] = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
             "name": record.name,
@@ -51,7 +51,7 @@ logger = get_logger("playref")
 
 
 @contextmanager
-def log_stage(stage_name: str, request_id: Optional[str] = None, **kwargs):
+def log_stage(stage_name: str, request_id: str | None = None, **kwargs):
     """Context manager to measure and log duration of pipeline stages."""
     start = time.perf_counter()
     logger.info(
@@ -83,4 +83,3 @@ def log_stage(stage_name: str, request_id: Optional[str] = None, **kwargs):
             },
         )
         raise
-

@@ -35,4 +35,3 @@ class ModelResponseError(LLMError):
     """Malformed or unexpected model response."""
 
     pass
-

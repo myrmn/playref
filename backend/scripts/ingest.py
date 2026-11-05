@@ -2,10 +2,9 @@
 
 import asyncio
 import json
-from pathlib import Path
 import random
 import sys
-from typing import List
+from pathlib import Path
 
 # Ensure project root is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -16,7 +15,6 @@ from rich.table import Table
 from backend.app.config import settings
 from backend.app.ingestion.chunker import LawChunker
 from backend.app.ingestion.indexer import index_chunks
-from backend.app.ingestion.models import LawChunk
 from backend.app.ingestion.parser import PDFParser
 
 console = Console()
@@ -27,7 +25,7 @@ async def run_ingestion(
     output_jsonl: str = "data/processed/chunks.jsonl",
     recreate: bool = True,
 ):
-    console.print(f"[bold cyan]PlayRef Laws Ingestion Pipeline[/bold cyan]")
+    console.print("[bold cyan]PlayRef Laws Ingestion Pipeline[/bold cyan]")
     console.print(f"Source PDF: {pdf_path}")
     console.print(f"Laws Edition: {settings.laws_edition}")
     console.print("-" * 60)
@@ -83,11 +81,15 @@ async def run_ingestion(
 
     # 5. Index into Qdrant
     console.print("\n[yellow]3. Embedding and Indexing into Qdrant...[/yellow]")
-    indexed_count = await index_chunks(chunks, batch_size=16, recreate=recreate)
-    console.print(f"[bold green]Successfully indexed {indexed_count} chunks into Qdrant![/bold green]")
+    indexed_count = await index_chunks(chunks, batch_size=64, recreate=recreate)
+    console.print(
+        f"[bold green]Successfully indexed {indexed_count} chunks into Qdrant![/bold green]"
+    )
 
     # 6. Spot check: 10 random chunks
-    console.print("\n[bold magenta]================ 10 RANDOM CHUNKS SPOT CHECK ================[/bold magenta]")
+    console.print(
+        "\n[bold magenta]================ 10 RANDOM CHUNKS SPOT CHECK ================[/bold magenta]"
+    )
     sample_indices = sorted(random.sample(range(len(chunks)), min(10, len(chunks))))
     for i, idx in enumerate(sample_indices, 1):
         c = chunks[idx]
@@ -95,10 +97,11 @@ async def run_ingestion(
         console.print(f"[bold]chunk_id:[/bold] {c.chunk_id}")
         console.print(f"[bold]law_number:[/bold] {c.law_number} ({c.law_title})")
         console.print(f"[bold]section_path:[/bold] {c.section_path}")
-        console.print(f"[bold]parent_id:[/bold] {c.parent_id} | [bold]page:[/bold] {c.page} | [bold]tokens:[/bold] {c.token_count} | [bold]images:[/bold] {c.page_images}")
+        console.print(
+            f"[bold]parent_id:[/bold] {c.parent_id} | [bold]page:[/bold] {c.page} | [bold]tokens:[/bold] {c.token_count} | [bold]images:[/bold] {c.page_images}"
+        )
         console.print(f"[bold green]Clean text preview:[/bold green]\n{c.clean_text[:280]}...")
 
 
 if __name__ == "__main__":
     asyncio.run(run_ingestion())
-

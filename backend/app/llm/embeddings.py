@@ -1,10 +1,10 @@
-"""Embedding Client for PlayRef (Dense BGE-M3 + Local Sparse fallback)."""
+"""Embedding Client for PlayRef (Local FastEmbed BGE + API fallback + BM25 Sparse)."""
 
 import math
 import re
 import time
 from collections import Counter
-from typing import Any, Dict, List, Optional, Tuple
+
 import httpx
 from tenacity import (
     retry,
@@ -25,47 +25,35 @@ from backend.app.logger import logger
 
 
 class BM25SparseEncoder:
-    """Local sparse lexical vector encoder for hybrid retrieval fallback.
-    
-    Produces sparse vectors {indices: List[int], values: List[float]} 
-    compatible with Qdrant SparseVector schema using Murmur/Python hashing.
-    """
+    """Local sparse lexical vector encoder for hybrid retrieval fallback."""
 
     def __init__(self, vocab_size: int = 100000):
         self.vocab_size = vocab_size
 
-    def _tokenize(self, text: str) -> List[str]:
-        # Lowercase and extract alphanumeric words
+    def _tokenize(self, text: str) -> list[str]:
         return re.findall(r"\b\w+\b", text.lower())
 
-    def encode(self, text: str) -> Tuple[List[int], List[float]]:
-        """Encode a single text into sparse indices and TF-IDF / term-frequency weights."""
+    def encode(self, text: str) -> tuple[list[int], list[float]]:
         tokens = self._tokenize(text)
         if not tokens:
             return [0], [0.0]
 
         counts = Counter(tokens)
-        max_tf = max(counts.values())
-
-        indices_dict: Dict[int, float] = {}
+        indices_dict: dict[int, float] = {}
         for token, count in counts.items():
-            # Hash to index within vocab_size
             idx = abs(hash(token)) % self.vocab_size
-            # Sublinear term frequency weighting: 1 + log(tf)
             weight = 1.0 + math.log(count)
             if idx in indices_dict:
                 indices_dict[idx] = max(indices_dict[idx], weight)
             else:
                 indices_dict[idx] = weight
 
-        # Sort indices for Qdrant requirement
         sorted_items = sorted(indices_dict.items(), key=lambda x: x[0])
         indices = [k for k, _ in sorted_items]
         values = [round(v, 4) for _, v in sorted_items]
         return indices, values
 
-    def encode_batch(self, texts: List[str]) -> List[Tuple[List[int], List[float]]]:
-        """Encode a batch of texts."""
+    def encode_batch(self, texts: list[str]) -> list[tuple[list[int], list[float]]]:
         return [self.encode(t) for t in texts]
 
 
@@ -73,23 +61,35 @@ sparse_encoder = BM25SparseEncoder()
 
 
 class EmbeddingClient:
-    """Client for generating dense embeddings via API and sparse embeddings locally."""
+    """Client for generating dense embeddings (local FastEmbed or remote API) and sparse vectors."""
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        model: Optional[str] = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
+        model: str | None = None,
+        provider: str | None = None,
         timeout: float = 60.0,
     ):
         self.base_url = (base_url or settings.llm_base_url).rstrip("/")
         self.api_key = api_key or settings.llm_api_key
         self.model = model or settings.model_embedding
+        self.provider = (provider or settings.embedding_provider).lower()
         self.timeout = timeout
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+        self._local_model = None
+
+    def _get_local_model(self):
+        if self._local_model is None:
+            from fastembed import TextEmbedding
+
+            # bge-large-en-v1.5 produces exact 1024-dim dense embeddings matching BGE-M3 dimension
+            logger.info("Initializing local FastEmbed BGE model (1024-dim)...")
+            self._local_model = TextEmbedding(model_name="BAAI/bge-large-en-v1.5")
+        return self._local_model
 
     def _map_http_error(self, response: httpx.Response) -> None:
         status = response.status_code
@@ -108,47 +108,49 @@ class EmbeddingClient:
         stop=stop_after_attempt(5),
         reraise=True,
     )
-    async def embed_dense(self, texts: List[str]) -> List[List[float]]:
-        """Generate dense embeddings for a list of strings."""
+    async def _embed_dense_api(self, texts: list[str]) -> list[list[float]]:
+        url = f"{self.base_url}/embeddings"
+        payload = {"model": self.model, "input": texts}
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.post(url, headers=self.headers, json=payload)
+        self._map_http_error(response)
+        data = response.json()
+        sorted_data = sorted(data["data"], key=lambda x: x["index"])
+        return [item["embedding"] for item in sorted_data]
+
+    async def embed_dense(self, texts: list[str]) -> list[list[float]]:
+        """Generate dense embeddings via local model or API."""
         if not texts:
             return []
 
-        url = f"{self.base_url}/embeddings"
-        payload: Dict[str, Any] = {
-            "model": self.model,
-            "input": texts,
-        }
         start = time.perf_counter()
 
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(url, headers=self.headers, json=payload)
-        except httpx.TimeoutException as exc:
-            raise APITimeoutError(f"Embeddings timeout with {url}") from exc
-        except httpx.RequestError as exc:
-            raise APIConnectionError(f"Embeddings connection error with {url}") from exc
+        if self.provider in ("local", "fastembed", "bge"):
+            model = self._get_local_model()
+            # FastEmbed embed returns an iterator of numpy arrays
+            vecs = [v.tolist() for v in model.embed(texts)]
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+            logger.info(
+                f"Locally embedded {len(texts)} texts in {duration_ms}ms",
+                extra={"duration_ms": duration_ms, "stage": "embed_dense_local"},
+            )
+            return vecs
 
-        self._map_http_error(response)
-        data = response.json()
+        # Fallback to remote API
+        vecs = await self._embed_dense_api(texts)
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
         logger.info(
-            f"Embedded {len(texts)} texts in {duration_ms}ms",
-            extra={"duration_ms": duration_ms, "stage": "embed_dense"},
+            f"API embedded {len(texts)} texts in {duration_ms}ms",
+            extra={"duration_ms": duration_ms, "stage": "embed_dense_api"},
         )
+        return vecs
 
-        try:
-            # Sort items by index to preserve order
-            sorted_data = sorted(data["data"], key=lambda x: x["index"])
-            return [item["embedding"] for item in sorted_data]
-        except (KeyError, IndexError) as exc:
-            raise ModelResponseError(f"Invalid embedding response format: {data}") from exc
-
-    async def embed_query(self, query: str) -> List[float]:
+    async def embed_query(self, query: str) -> list[float]:
         """Embed a single query string."""
         results = await self.embed_dense([query])
         return results[0]
 
-    def embed_sparse(self, text: str) -> Tuple[List[int], List[float]]:
+    def embed_sparse(self, text: str) -> tuple[list[int], list[float]]:
         """Compute sparse lexical vector for a text."""
         return sparse_encoder.encode(text)
 

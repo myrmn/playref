@@ -2,7 +2,9 @@
 
 import json
 import time
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from collections.abc import AsyncGenerator
+from typing import Any
+
 import httpx
 from tenacity import (
     retry,
@@ -27,8 +29,8 @@ class ChatClient:
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
         timeout: float = 60.0,
     ):
         self.base_url = (base_url or settings.llm_base_url).rstrip("/")
@@ -59,15 +61,15 @@ class ChatClient:
     )
     async def complete(
         self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
+        messages: list[dict[str, str]],
+        model: str | None = None,
         temperature: float = 0.1,
-        max_tokens: Optional[int] = 2048,
-        response_format: Optional[Dict[str, str]] = None,
+        max_tokens: int | None = 2048,
+        response_format: dict[str, str] | None = None,
     ) -> str:
         """Execute a non-streaming chat completion."""
         target_model = model or settings.model_chat
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": target_model,
             "messages": messages,
             "temperature": temperature,
@@ -106,14 +108,14 @@ class ChatClient:
 
     async def stream(
         self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
+        messages: list[dict[str, str]],
+        model: str | None = None,
         temperature: float = 0.1,
-        max_tokens: Optional[int] = 2048,
+        max_tokens: int | None = 2048,
     ) -> AsyncGenerator[str, None]:
         """Execute a streaming chat completion yielding content deltas."""
         target_model = model or settings.model_chat
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": target_model,
             "messages": messages,
             "temperature": temperature,
@@ -150,4 +152,3 @@ class ChatClient:
 
 
 chat_client = ChatClient()
-

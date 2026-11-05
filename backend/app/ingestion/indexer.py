@@ -2,7 +2,7 @@
 
 import asyncio
 import uuid
-from typing import List
+
 import httpx
 from qdrant_client import QdrantClient, models
 
@@ -11,22 +11,30 @@ from backend.app.ingestion.models import LawChunk
 from backend.app.llm.embeddings import embedding_client, sparse_encoder
 from backend.app.logger import logger
 
+_qdrant_singleton: QdrantClient | None = None
+
 
 def get_qdrant_client() -> QdrantClient:
-    """Connect to remote Qdrant if reachable, else fall back to local embedded storage."""
+    """Connect to remote Qdrant if reachable, else fall back to shared local embedded storage."""
+    global _qdrant_singleton
+    if _qdrant_singleton is not None:
+        return _qdrant_singleton
+
     if settings.qdrant_url:
         try:
             with httpx.Client(timeout=1.5) as http:
                 r = http.get(f"{settings.qdrant_url.rstrip('/')}/readyz")
                 if r.status_code == 200:
                     logger.info(f"Connected to remote Qdrant at {settings.qdrant_url}")
-                    return QdrantClient(url=settings.qdrant_url)
+                    _qdrant_singleton = QdrantClient(url=settings.qdrant_url)
+                    return _qdrant_singleton
         except Exception:
             logger.warning(
                 f"Remote Qdrant at {settings.qdrant_url} unreachable. Using local embedded storage at {settings.qdrant_path}"
             )
 
-    return QdrantClient(path=settings.qdrant_path or "data/qdrant_storage")
+    _qdrant_singleton = QdrantClient(path=settings.qdrant_path or "data/qdrant_storage")
+    return _qdrant_singleton
 
 
 def init_collection(
@@ -58,18 +66,20 @@ def init_collection(
 
 
 async def index_chunks(
-    chunks: List[LawChunk],
-    batch_size: int = 32,
+    chunks: list[LawChunk],
+    batch_size: int = 64,
     collection_name: str = settings.qdrant_collection,
     recreate: bool = False,
-    pause_between_batches: float = 1.5,
+    pause_between_batches: float = 0.0,
 ) -> int:
-    """Embed chunks and upsert into Qdrant idempotently with polite pacing for API rate limits."""
+    """Embed chunks and upsert into Qdrant idempotently."""
     client = get_qdrant_client()
     init_collection(client, collection_name=collection_name, recreate=recreate)
 
     total = len(chunks)
-    logger.info(f"Indexing {total} chunks in batches of {batch_size} (pacing: {pause_between_batches}s)...")
+    logger.info(
+        f"Indexing {total} chunks in batches of {batch_size} (pacing: {pause_between_batches}s)..."
+    )
 
     indexed_count = 0
     for i in range(0, total, batch_size):
@@ -80,7 +90,7 @@ async def index_chunks(
         dense_vecs = await embedding_client.embed_dense(texts)
 
         # Build Qdrant PointStruct list
-        points: List[models.PointStruct] = []
+        points: list[models.PointStruct] = []
         for chunk, dense_vec in zip(batch, dense_vecs):
             indices, values = sparse_encoder.encode(chunk.text_for_embedding)
             point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk.chunk_id))

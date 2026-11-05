@@ -1,11 +1,9 @@
 """Parent section expansion helper."""
 
-from typing import Dict, Optional
 from qdrant_client import models
 
 from backend.app.config import settings
 from backend.app.ingestion.indexer import get_qdrant_client
-from backend.app.ingestion.models import LawChunk
 
 
 class ParentExpander:
@@ -14,9 +12,9 @@ class ParentExpander:
     def __init__(self, collection_name: str = settings.qdrant_collection):
         self.collection_name = collection_name
         self.client = get_qdrant_client()
-        self._cache: Dict[str, Optional[str]] = {}
+        self._cache: dict[str, str | None] = {}
 
-    def get_parent_text(self, parent_id: Optional[str]) -> Optional[str]:
+    def get_parent_text(self, parent_id: str | None) -> str | None:
         if not parent_id:
             return None
 
@@ -49,4 +47,3 @@ class ParentExpander:
 
 
 parent_expander = ParentExpander()
-

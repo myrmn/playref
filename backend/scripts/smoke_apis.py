@@ -5,10 +5,10 @@ Verifies chat, streaming, JSON mode, embeddings, and reranking on the configured
 
 import asyncio
 import json
-from pathlib import Path
 import sys
 import time
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any
 
 # Ensure project root is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -22,7 +22,7 @@ from backend.app.config import settings
 console = Console()
 
 
-async def test_chat_endpoint(client: httpx.AsyncClient, model: str) -> Dict[str, Any]:
+async def test_chat_endpoint(client: httpx.AsyncClient, model: str) -> dict[str, Any]:
     """Test standard chat completion."""
     start = time.perf_counter()
     try:
@@ -40,13 +40,17 @@ async def test_chat_endpoint(client: httpx.AsyncClient, model: str) -> Dict[str,
             data = r.json()
             content = data["choices"][0]["message"]["content"].strip()
             return {"status": "PASS", "latency_ms": latency, "detail": f"Output: '{content}'"}
-        return {"status": "FAIL", "latency_ms": latency, "detail": f"HTTP {r.status_code}: {r.text[:100]}"}
+        return {
+            "status": "FAIL",
+            "latency_ms": latency,
+            "detail": f"HTTP {r.status_code}: {r.text[:100]}",
+        }
     except Exception as exc:
         latency = round((time.perf_counter() - start) * 1000, 1)
         return {"status": "ERROR", "latency_ms": latency, "detail": str(exc)[:100]}
 
 
-async def test_chat_json_mode(client: httpx.AsyncClient, model: str) -> Dict[str, Any]:
+async def test_chat_json_mode(client: httpx.AsyncClient, model: str) -> dict[str, Any]:
     """Test JSON mode on chat completion."""
     start = time.perf_counter()
     try:
@@ -56,7 +60,10 @@ async def test_chat_json_mode(client: httpx.AsyncClient, model: str) -> Dict[str
                 "model": model,
                 "messages": [
                     {"role": "system", "content": "You are a JSON assistant."},
-                    {"role": "user", "content": "Return a JSON object with key 'success' set to true."},
+                    {
+                        "role": "user",
+                        "content": "Return a JSON object with key 'success' set to true.",
+                    },
                 ],
                 "response_format": {"type": "json_object"},
                 "max_tokens": 50,
@@ -68,15 +75,23 @@ async def test_chat_json_mode(client: httpx.AsyncClient, model: str) -> Dict[str
             content = r.json()["choices"][0]["message"]["content"].strip()
             parsed = json.loads(content)
             if parsed.get("success") is True:
-                return {"status": "PASS", "latency_ms": latency, "detail": "Valid JSON output verified"}
+                return {
+                    "status": "PASS",
+                    "latency_ms": latency,
+                    "detail": "Valid JSON output verified",
+                }
             return {"status": "PARTIAL", "latency_ms": latency, "detail": f"Parsed: {parsed}"}
-        return {"status": "FAIL", "latency_ms": latency, "detail": f"HTTP {r.status_code}: {r.text[:100]}"}
+        return {
+            "status": "FAIL",
+            "latency_ms": latency,
+            "detail": f"HTTP {r.status_code}: {r.text[:100]}",
+        }
     except Exception as exc:
         latency = round((time.perf_counter() - start) * 1000, 1)
         return {"status": "ERROR", "latency_ms": latency, "detail": str(exc)[:100]}
 
 
-async def test_chat_streaming(client: httpx.AsyncClient, model: str) -> Dict[str, Any]:
+async def test_chat_streaming(client: httpx.AsyncClient, model: str) -> dict[str, Any]:
     """Test streaming generation."""
     start = time.perf_counter()
     tokens = []
@@ -120,7 +135,7 @@ async def test_chat_streaming(client: httpx.AsyncClient, model: str) -> Dict[str
         return {"status": "ERROR", "latency_ms": latency, "detail": str(exc)[:100]}
 
 
-async def test_embeddings(client: httpx.AsyncClient, model: str) -> Dict[str, Any]:
+async def test_embeddings(client: httpx.AsyncClient, model: str) -> dict[str, Any]:
     """Test embedding endpoint, dimension, and sparse support."""
     start = time.perf_counter()
     try:
@@ -140,13 +155,17 @@ async def test_embeddings(client: httpx.AsyncClient, model: str) -> Dict[str, An
             has_sparse = "sparse" in item or "sparse_embedding" in item
             detail = f"Dense dim: {dim}, Sparse returned: {has_sparse}"
             return {"status": "PASS", "latency_ms": latency, "detail": detail}
-        return {"status": "FAIL", "latency_ms": latency, "detail": f"HTTP {r.status_code}: {r.text[:100]}"}
+        return {
+            "status": "FAIL",
+            "latency_ms": latency,
+            "detail": f"HTTP {r.status_code}: {r.text[:100]}",
+        }
     except Exception as exc:
         latency = round((time.perf_counter() - start) * 1000, 1)
         return {"status": "ERROR", "latency_ms": latency, "detail": str(exc)[:100]}
 
 
-async def test_rerank(client: httpx.AsyncClient, model: str) -> Dict[str, Any]:
+async def test_rerank(client: httpx.AsyncClient, model: str) -> dict[str, Any]:
     """Test rerank endpoint and response format."""
     start = time.perf_counter()
     try:
@@ -168,29 +187,49 @@ async def test_rerank(client: httpx.AsyncClient, model: str) -> Dict[str, Any]:
             results = data.get("results", [])
             top_score = results[0]["relevance_score"] if results else 0.0
             top_idx = results[0]["index"] if results else -1
-            detail = f"Top doc idx: {top_idx} (score: {top_score:.4f}), results count: {len(results)}"
+            detail = (
+                f"Top doc idx: {top_idx} (score: {top_score:.4f}), results count: {len(results)}"
+            )
             return {"status": "PASS", "latency_ms": latency, "detail": detail}
-        return {"status": "FAIL", "latency_ms": latency, "detail": f"HTTP {r.status_code}: {r.text[:100]}"}
+        return {
+            "status": "FAIL",
+            "latency_ms": latency,
+            "detail": f"HTTP {r.status_code}: {r.text[:100]}",
+        }
     except Exception as exc:
         latency = round((time.perf_counter() - start) * 1000, 1)
         return {"status": "ERROR", "latency_ms": latency, "detail": str(exc)[:100]}
 
 
 async def run_smoke_tests():
-    console.print(f"[bold cyan]PlayRef Model Smoke Tests[/bold cyan]")
+    console.print("[bold cyan]PlayRef Model Smoke Tests[/bold cyan]")
     console.print(f"Base URL: {settings.llm_base_url}")
     console.print(f"Auth Key: {'*' * 8}...{'*' * 4} (configured)")
     console.print("-" * 60)
 
     headers = {"Authorization": f"Bearer {settings.llm_api_key}"}
-    async with httpx.AsyncClient(base_url=settings.llm_base_url, headers=headers, timeout=30.0) as client:
+    async with httpx.AsyncClient(
+        base_url=settings.llm_base_url, headers=headers, timeout=30.0
+    ) as client:
         tests = [
             ("Chat (Main)", settings.model_chat, test_chat_endpoint(client, settings.model_chat)),
-            ("Chat (Fast/Router)", settings.model_fast, test_chat_endpoint(client, settings.model_fast)),
-            ("Chat (Reasoning)", settings.model_reasoning, test_chat_endpoint(client, settings.model_reasoning)),
+            (
+                "Chat (Fast/Router)",
+                settings.model_fast,
+                test_chat_endpoint(client, settings.model_fast),
+            ),
+            (
+                "Chat (Reasoning)",
+                settings.model_reasoning,
+                test_chat_endpoint(client, settings.model_reasoning),
+            ),
             ("JSON Mode", settings.model_chat, test_chat_json_mode(client, settings.model_chat)),
             ("Streaming", settings.model_chat, test_chat_streaming(client, settings.model_chat)),
-            ("Embeddings", settings.model_embedding, test_embeddings(client, settings.model_embedding)),
+            (
+                "Embeddings",
+                settings.model_embedding,
+                test_embeddings(client, settings.model_embedding),
+            ),
             ("Reranker", settings.model_rerank, test_rerank(client, settings.model_rerank)),
         ]
 
@@ -217,7 +256,9 @@ async def run_smoke_tests():
 
         console.print(table)
         if all_passed:
-            console.print("[bold green]All model endpoints and capabilities verified successfully![/bold green]")
+            console.print(
+                "[bold green]All model endpoints and capabilities verified successfully![/bold green]"
+            )
         else:
             console.print("[bold red]One or more smoke tests failed![/bold red]")
 

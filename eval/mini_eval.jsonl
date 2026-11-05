@@ -1,0 +1,21 @@
+{"id": 1, "query": "Can a goalkeeper score directly from a goal kick?", "expected_laws": [16, 10]}
+{"id": 2, "query": "Is a player penalised for simply being in an offside position without interfering with play or an opponent?", "expected_laws": [11]}
+{"id": 3, "query": "Can a goal be scored directly from a throw-in?", "expected_laws": [15, 10]}
+{"id": 4, "query": "What happens if a penalty kick rebounds off the goalpost back to the kicker who touches it again?", "expected_laws": [14]}
+{"id": 5, "query": "Can a referee show a red card to a player before the match has actually started?", "expected_laws": [5, 12]}
+{"id": 6, "query": "What is the restart and disciplinary sanction if a player spits at an opponent?", "expected_laws": [12]}
+{"id": 7, "query": "Can a goal be scored directly from a direct free kick against the opposing team?", "expected_laws": [13, 10]}
+{"id": 8, "query": "What is the restart if an outside agent or spectator interferes with play?", "expected_laws": [8, 3]}
+{"id": 9, "query": "Can a goalkeeper touch the ball with their hands after a deliberate kick from a team-mate?", "expected_laws": [12]}
+{"id": 10, "query": "Are players permitted to wear jewelry such as rings or necklaces if covered with tape?", "expected_laws": [4]}
+{"id": 11, "query": "What happens if a corner kick is kicked directly into the kicker's own goal?", "expected_laws": [17]}
+{"id": 12, "query": "When is the ball officially in play at a kick-off?", "expected_laws": [8]}
+{"id": 13, "query": "What sanction is given if a named substitute enters the field of play without referee permission?", "expected_laws": [3]}
+{"id": 14, "query": "Can the referee change a decision after play has restarted?", "expected_laws": [5, 18]}
+{"id": 15, "query": "What are the duties and authority of assistant referees?", "expected_laws": [6, 19]}
+{"id": 16, "query": "What restart is awarded if a player plays in a dangerous manner without making contact?", "expected_laws": [12]}
+{"id": 17, "query": "What is the minimum number of players a team must have for a match to start or continue?", "expected_laws": [3]}
+{"id": 18, "query": "What offence occurs if a goalkeeper controls the ball with their hands for too long?", "expected_laws": [12]}
+{"id": 19, "query": "What happens if the ball becomes defective or bursts during play?", "expected_laws": [2, 8]}
+{"id": 20, "query": "How is the outcome of a match determined if tied after regulation and extra time?", "expected_laws": [10]}
+

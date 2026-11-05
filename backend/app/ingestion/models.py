@@ -1,6 +1,5 @@
 """Data models for ingestion and chunking."""
 
-from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -13,9 +12,8 @@ class LawChunk(BaseModel):
     page: int
     source: str = "IFAB Laws of the Game"
     lang: str = "en"
-    parent_id: Optional[str] = None
-    page_images: List[int] = Field(default_factory=list)
+    parent_id: str | None = None
+    page_images: list[int] = Field(default_factory=list)
     clean_text: str  # Original text for display & citation
     text_for_embedding: str  # Section path prepended to text
     token_count: int = 0
-
