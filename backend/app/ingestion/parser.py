@@ -102,10 +102,11 @@ class PDFParser:
                 if law_num != current_law_num:
                     current_law_num = law_num
                     current_law_title = law_title
-                    current_sec_num = "1"
+                    current_sec_num = "0"
                     current_sec_title = "Overview"
                     current_sub_sec = None
-                    current_parent_id = f"law{law_num}-s1"
+                    current_parent_id = f"law{law_num}-s0"
+                    current_raw_section = None
             elif m_var:
                 if current_law_num != 18:
                     current_law_num = 18
@@ -114,6 +115,7 @@ class PDFParser:
                     current_sec_title = "Protocol"
                     current_sub_sec = None
                     current_parent_id = "law18-s1"
+                    current_raw_section = None
             elif m_guidelines:
                 if current_law_num != 19:
                     current_law_num = 19
@@ -122,6 +124,7 @@ class PDFParser:
                     current_sec_title = "Guidelines"
                     current_sub_sec = None
                     current_parent_id = "law19-s1"
+                    current_raw_section = None
 
             # If not in a recognized Law section, skip
             if current_law_num is None:

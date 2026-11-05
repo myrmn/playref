@@ -34,9 +34,9 @@ Turn the CLI pipeline into a robust, multilingual, conversational backend with a
 - Stage timing in logs and in a debug field when `DEBUG=1`.
 
 ### 6. Persistence and limits
-- Postgres via SQLAlchemy 2 async + Alembic: conversations, messages (store answer JSON + retrieved chunk ids), feedback (thumbs, reason incl. "wrong_law_cited").
+- Supabase: conversations, messages (store answer JSON + retrieved chunk ids), feedback (thumbs, reason incl. "wrong_law_cited").
 - Redis rate limiting (per IP/session) and optional response cache for identical standalone queries.
-- Add Redis to docker-compose.
+
 
 ### 7. Evaluation (`eval/`)
 - Golden set `eval/golden.jsonl`, 100+ items: rules questions, scenario questions, EN/FR/AR variants of the same questions, trap questions (not covered by Laws, missing info), off-topic.

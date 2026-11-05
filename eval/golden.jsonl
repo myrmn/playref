@@ -1,0 +1,105 @@
+{"id": 1, "question": "Can a goalkeeper score directly from a goal kick?", "lang": "en", "expected_laws": [16, 10], "expected_behavior": "answer"}
+{"id": 2, "question": "Est-ce qu'un gardien peut marquer directement sur un coup de pied de but ?", "lang": "fr", "expected_laws": [16, 10], "expected_behavior": "answer"}
+{"id": 3, "question": "هل يمكن لحارس المرمى تسجيل هدف مباشر من ركلة مرمى؟", "lang": "ar", "expected_laws": [16, 10], "expected_behavior": "answer"}
+{"id": 4, "question": "Can a player score an own goal directly from a throw-in?", "lang": "en", "expected_laws": [15], "expected_behavior": "answer"}
+{"id": 5, "question": "Peut-on marquer contre son camp directement sur une rentree de touche ?", "lang": "fr", "expected_laws": [15], "expected_behavior": "answer"}
+{"id": 6, "question": "هل يمكن تسجيل هدف ضد المرمى مباشرة من رمية تماس؟", "lang": "ar", "expected_laws": [15], "expected_behavior": "answer"}
+{"id": 7, "question": "Is being in an offside position an offence by itself?", "lang": "en", "expected_laws": [11], "expected_behavior": "answer"}
+{"id": 8, "question": "Le fait d'etre en position de hors-jeu constitue-t-il une infraction en soi ?", "lang": "fr", "expected_laws": [11], "expected_behavior": "answer"}
+{"id": 9, "question": "هل مجرد التواجد في موقف تسلل يعتبر خطأ بحد ذاته؟", "lang": "ar", "expected_laws": [11], "expected_behavior": "answer"}
+{"id": 10, "question": "What happens if a penalty kick hits the post and the kicker touches it again?", "lang": "en", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 11, "question": "Que se passe-t-il si un penalty heurte le poteau et que le tireur retouche le ballon ?", "lang": "fr", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 12, "question": "ماذا يحدث إذا ارتدت ركلة الجزاء من القائم وعاد المسدد للمسها مباشرة؟", "lang": "ar", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 13, "question": "Can a goal be scored directly from a corner kick into the opponent goal?", "lang": "en", "expected_laws": [17], "expected_behavior": "answer"}
+{"id": 14, "question": "Peut-on marquer un but directement sur un coup de pied de coin ?", "lang": "fr", "expected_laws": [17], "expected_behavior": "answer"}
+{"id": 15, "question": "هل يمكن تسجيل هدف مباشر من ركلة ركنية؟", "lang": "ar", "expected_laws": [17], "expected_behavior": "answer"}
+{"id": 16, "question": "When is the ball in play at a kick-off?", "lang": "en", "expected_laws": [8], "expected_behavior": "answer"}
+{"id": 17, "question": "Quand le ballon est-il en jeu lors d'un coup d'envoi ?", "lang": "fr", "expected_laws": [8], "expected_behavior": "answer"}
+{"id": 18, "question": "متى تصبح الكرة في اللعب عند ركلة البداية؟", "lang": "ar", "expected_laws": [8], "expected_behavior": "answer"}
+{"id": 19, "question": "Can a player wear a wedding ring covered by tape?", "lang": "en", "expected_laws": [4], "expected_behavior": "answer"}
+{"id": 20, "question": "Un joueur peut-il porter une bague recouverte de ruban adhesif ?", "lang": "fr", "expected_laws": [4], "expected_behavior": "answer"}
+{"id": 21, "question": "هل يجوز للاعب ارتداء خاتم زواج مغطى بشريط لاصق؟", "lang": "ar", "expected_laws": [4], "expected_behavior": "answer"}
+{"id": 22, "question": "What is the minimum number of players a team must have to continue a match?", "lang": "en", "expected_laws": [3], "expected_behavior": "answer"}
+{"id": 23, "question": "Quel est le nombre minimum de joueurs pour qu'une equipe puisse poursuivre le match ?", "lang": "fr", "expected_laws": [3], "expected_behavior": "answer"}
+{"id": 24, "question": "ما هو الحد الأدنى لعدد اللاعبين لمواصلة المباراة؟", "lang": "ar", "expected_laws": [3], "expected_behavior": "answer"}
+{"id": 25, "question": "Can the referee show a red card to a player before the match starts?", "lang": "en", "expected_laws": [5, 12], "expected_behavior": "answer"}
+{"id": 26, "question": "L'arbitre peut-il infliger un carton rouge avant le coup d'envoi ?", "lang": "fr", "expected_laws": [5, 12], "expected_behavior": "answer"}
+{"id": 27, "question": "هل يمكن للحكم إشهار بطاقة حمراء للاعب قبل انطلاق المباراة؟", "lang": "ar", "expected_laws": [5, 12], "expected_behavior": "answer"}
+{"id": 28, "question": "What is the sanction for spitting at an opponent?", "lang": "en", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 29, "question": "Quelle est la sanction pour un crachat sur un adversaire ?", "lang": "fr", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 30, "question": "ما هي العقوبة على البصق على الخصم؟", "lang": "ar", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 31, "question": "Can a goalkeeper handle the ball after a deliberate pass with the foot by a teammate?", "lang": "en", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 32, "question": "Le gardien peut-il prendre le ballon a la main sur une passe volontaire du pied d'un coequipier ?", "lang": "fr", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 33, "question": "هل يحق للحارس لمس الكرة بيده إثر تمريرة متعمدة بالقدم من زميله؟", "lang": "ar", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 34, "question": "Does double jeopardy downgrade a DOGSO red card to yellow inside the penalty area?", "lang": "en", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 35, "question": "La tentative de jouer le ballon sur une action DOGSO dans la surface transforme-t-elle le rouge en jaune ?", "lang": "fr", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 36, "question": "هل تتحول البطاقة الحمراء في فرصة هدف محقق (DOGSO) إلى صفراء داخل المنطقة إذا كانت هناك محاولة للعب الكرة؟", "lang": "ar", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 37, "question": "Can VAR intervene on a second yellow card leading to a red?", "lang": "en", "expected_laws": [18], "expected_behavior": "answer"}
+{"id": 38, "question": "La VAR peut-elle intervenir sur un second avertissement conduisant a une exclusion ?", "lang": "fr", "expected_laws": [18], "expected_behavior": "answer"}
+{"id": 39, "question": "هل تتدخل تقنية الفيديو في حالة الإنذار الثاني المؤدي للطرد؟", "lang": "ar", "expected_laws": [18], "expected_behavior": "answer"}
+{"id": 40, "question": "What is the restart if a spectator enters the pitch and touches the ball in play?", "lang": "en", "expected_laws": [8, 3], "expected_behavior": "answer"}
+{"id": 41, "question": "Quel est le mode de reprise si un spectateur entre et touche le ballon ?", "lang": "fr", "expected_laws": [8, 3], "expected_behavior": "answer"}
+{"id": 42, "question": "ما هو استئناف اللعب إذا دخل مشجع ولمس الكرة أثناء اللعب؟", "lang": "ar", "expected_laws": [8, 3], "expected_behavior": "answer"}
+{"id": 43, "question": "Can a player take off their shirt during a goal celebration without being cautioned?", "lang": "en", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 44, "question": "Un joueur peut-il retirer son maillot pour celebrer un but sans recevoir d'avertissement ?", "lang": "fr", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 45, "question": "هل يمكن للاعب خلع قميصه للاحتفال بهدف دون الحصول على بطاقة صفراء؟", "lang": "ar", "expected_laws": [12], "expected_behavior": "answer"}
+{"id": 46, "question": "Can an indirect free kick score directly into the opponents goal?", "lang": "en", "expected_laws": [13], "expected_behavior": "answer"}
+{"id": 47, "question": "Un coup franc indirect peut-il entrer directement dans le but adverse pour marquer ?", "lang": "fr", "expected_laws": [13], "expected_behavior": "answer"}
+{"id": 48, "question": "هل يدخل الهدف مباشرة من ركلة حرة غير مباشرة؟", "lang": "ar", "expected_laws": [13], "expected_behavior": "answer"}
+{"id": 49, "question": "How far must opponents stand from the ball at a free kick?", "lang": "en", "expected_laws": [13], "expected_behavior": "answer"}
+{"id": 50, "question": "A quelle distance minimale doivent se trouver les adversaires lors d'un coup franc ?", "lang": "fr", "expected_laws": [13], "expected_behavior": "answer"}
+{"id": 51, "question": "ما هي المسافة القانونية التي يجب أن يقف عندها الخصوم في الركلة الحرة؟", "lang": "ar", "expected_laws": [13], "expected_behavior": "answer"}
+{"id": 52, "question": "Where must the goalkeeper stand during a penalty kick?", "lang": "en", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 53, "question": "Ou le gardien de but doit-il se positionner lors d'un penalty ?", "lang": "fr", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 54, "question": "أين يجب أن يقف حارس المرمى أثناء ركلة الجزاء؟", "lang": "ar", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 55, "question": "Can an attacker in an offside position be penalised for obstructing the goalkeeper vision?", "lang": "en", "expected_laws": [11], "expected_behavior": "answer"}
+{"id": 56, "question": "Un attaquant hors-jeu peut-il etre sanctionne s'il bouche la vue du gardien ?", "lang": "fr", "expected_laws": [11], "expected_behavior": "answer"}
+{"id": 57, "question": "هل يعاقب اللاعب المتسلل إذا حجب الرؤية عن حارس المرمى دون لمس الكرة؟", "lang": "ar", "expected_laws": [11], "expected_behavior": "answer"}
+{"id": 58, "question": "Can a player score a goal directly from a dropped ball?", "lang": "en", "expected_laws": [8], "expected_behavior": "answer"}
+{"id": 59, "question": "Peut-on marquer directement sur une balle a terre ?", "lang": "fr", "expected_laws": [8], "expected_behavior": "answer"}
+{"id": 60, "question": "هل يجوز تسجيل هدف مباشر من كرة إسقاط؟", "lang": "ar", "expected_laws": [8], "expected_behavior": "answer"}
+{"id": 61, "question": "What happens if both teams encroach into the penalty area during a penalty kick?", "lang": "en", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 62, "question": "Que se passe-t-il si les deux equipes commettent un empietement lors d'un penalty ?", "lang": "fr", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 63, "question": "ماذا يحدث إذا دخل لاعبو الفريقين إلى منطقة الجزاء قبل تنفيذ ركلة الجزاء؟", "lang": "ar", "expected_laws": [14], "expected_behavior": "answer"}
+{"id": 64, "question": "Can a team use an additional permanent concussion substitution?", "lang": "en", "expected_laws": [3], "expected_behavior": "answer"}
+{"id": 65, "question": "Une equipe peut-elle effectuer un remplacement supplementaire pour commotion cerebrale ?", "lang": "fr", "expected_laws": [3], "expected_behavior": "answer"}
+{"id": 66, "question": "هل يُسمح بتبديل إضافي دائم في حالات الارتجاج الدماغي؟", "lang": "ar", "expected_laws": [3], "expected_behavior": "answer"}
+{"id": 67, "question": "What is the maximum allowed duration for the half-time interval?", "lang": "en", "expected_laws": [7], "expected_behavior": "answer"}
+{"id": 68, "question": "Quelle est la duree maximale autorisee pour la pause de mi-temps ?", "lang": "fr", "expected_laws": [7], "expected_behavior": "answer"}
+{"id": 69, "question": "ما هي المدة القصوى المسموح بها لاستراحة ما بين الشوطين؟", "lang": "ar", "expected_laws": [7], "expected_behavior": "answer"}
+{"id": 70, "question": "Can a player be cautioned during penalties penalty shoot-out?", "lang": "en", "expected_laws": [10], "expected_behavior": "answer"}
+{"id": 71, "question": "Un joueur peut-il recevoir un avertissement pendant la seance de tirs au but ?", "lang": "fr", "expected_laws": [10], "expected_behavior": "answer"}
+{"id": 72, "question": "هل يمكن توجيه إنذار للاعب أثناء الركلات الترجيحية؟", "lang": "ar", "expected_laws": [10], "expected_behavior": "answer"}
+{"id": 73, "question": "A player tackled an opponent. What is the card and restart?", "lang": "en", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 74, "question": "Un joueur a tacle un adversaire. Quel est le carton et la reprise ?", "lang": "fr", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 75, "question": "لاعب عرقل خصمه، شنوة القرار والبطاقة؟", "lang": "ar", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 76, "question": "The ball touched a defender's hand inside the box. Is it a penalty or not?", "lang": "en", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 77, "question": "Le ballon a touche la main dans la surface. Y a-t-il penalty ?", "lang": "fr", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 78, "question": "الكرة لمست يد المدافع، بينالتي والا لا؟", "lang": "ar", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 79, "question": "A foul occurred during a counter attack. What is the sanction?", "lang": "en", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 80, "question": "The attacker was offside when the shot was taken. Is it an offence?", "lang": "en", "expected_laws": [11], "expected_behavior": "clarify"}
+{"id": 81, "question": "Two players argued aggressively on the pitch. What should the referee do?", "lang": "en", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 82, "question": "There was physical contact between the goalkeeper and attacker.", "lang": "en", "expected_laws": [12], "expected_behavior": "clarify"}
+{"id": 83, "question": "What is the annual salary of Premier League referee Anthony Taylor?", "lang": "en", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 84, "question": "Quel est le salaire mensuel moyen d'un arbitre de Ligue 1 ?", "lang": "fr", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 85, "question": "قداش يخلص الحكم في تونس شهرياً؟", "lang": "ar", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 86, "question": "How much does a match ticket cost for the World Cup final?", "lang": "en", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 87, "question": "Combien coute un billet pour la finale de la Coupe du Monde ?", "lang": "fr", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 88, "question": "Who won the Ballon d'Or in 2024?", "lang": "en", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 89, "question": "Qui a gagne le Ballon d'Or 2024 ?", "lang": "fr", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 90, "question": "شكون ربح دوري أبطال أوروبا عمناول؟", "lang": "ar", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 91, "question": "What is the exact seating capacity of the Santiago Bernabeu stadium?", "lang": "en", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 92, "question": "Quelle est la marque officielle des crampons de Kylian Mbappe ?", "lang": "fr", "expected_laws": [], "expected_behavior": "abstain"}
+{"id": 93, "question": "Can you give me a recipe for homemade Italian pizza?", "lang": "en", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 94, "question": "Donne-moi une recette de gateau au chocolat facile et rapide.", "lang": "fr", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 95, "question": "كيفاش نطيب كسكسي تونسي بالعلوش في الدار؟", "lang": "ar", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 96, "question": "Write a Python function to sort a list using quicksort algorithm.", "lang": "en", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 97, "question": "Comment resoudre une equation differentielle du second ordre ?", "lang": "fr", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 98, "question": "Who is the current president of France?", "lang": "en", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 99, "question": "Quel est le temps qu'il fera demain a Paris ?", "lang": "fr", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 100, "question": "اشنوة طقس تونس غدوة الصباح؟", "lang": "ar", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 101, "question": "What is quantum entanglement in modern physics?", "lang": "en", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 102, "question": "Explain the rules of chess and how the knight moves on the board.", "lang": "en", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 103, "question": "Aide-moi a rediger une lettre de motivation pour un stage de fin d'etudes.", "lang": "fr", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 104, "question": "شنية احسن كرهبة مستعملة نشريها في تونس بـ 30 مليون؟", "lang": "ar", "expected_laws": [], "expected_behavior": "redirect"}
+{"id": 105, "question": "What is the capital city of Australia?", "lang": "en", "expected_laws": [], "expected_behavior": "redirect"}

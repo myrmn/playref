@@ -10,6 +10,8 @@ data/*.pdf
 data/*.PDF
 data/processed/*.jsonl
 data/qdrant_storage/
+data/*.db
+data/playref.db
 .pytest_cache/
 .ruff_cache/
 logs/
