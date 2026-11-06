@@ -77,6 +77,15 @@ class Settings(BaseSettings):
     database_url: str = Field(default="postgresql+asyncpg://playref:playref@localhost:5432/playref")
     redis_url: str = Field(default="redis://localhost:6379/0")
 
+    # Security & Admin
+    admin_api_key: str = Field(
+        default_factory=lambda: os.getenv("ADMIN_API_KEY", "playref-admin-secret")
+    )
+
+    # Observability & Optimization Flags
+    metrics_enabled: bool = Field(default=True)
+    prompt_version: str = Field(default="v1.0")
+
     # App Parameters
     laws_edition: str = Field(default="2026/27")
     retrieve_top_k: int = Field(default=30)

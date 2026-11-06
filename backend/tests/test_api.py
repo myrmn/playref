@@ -69,3 +69,41 @@ async def test_get_chunk():
         data = r.json()
         assert data["law_number"] == 12
         assert "Direct free kick" in data["section_path"]
+
+
+@pytest.mark.asyncio
+async def test_admin_stats_security():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Missing admin key -> 401
+        r_unauth = await client.get("/admin/stats")
+        assert r_unauth.status_code == 401
+
+        # 2. Invalid admin key -> 401
+        r_wrong = await client.get("/admin/stats", headers={"X-Admin-Key": "wrong-secret"})
+        assert r_wrong.status_code == 401
+
+        # 3. Valid admin key via header -> 200
+        from backend.app.config import settings
+
+        r_valid = await client.get("/admin/stats", headers={"X-Admin-Key": settings.admin_api_key})
+        assert r_valid.status_code == 200
+        stats = r_valid.json()
+        assert "system" in stats
+        assert "requests" in stats
+        assert "cache" in stats
+        assert "latencies" in stats
+        assert "tokens" in stats
+        assert stats["system"]["current_rss_mb"] > 0
+
+        # 4. Valid admin key via query param on /metrics -> 200
+        r_metrics = await client.get(f"/metrics?admin_key={settings.admin_api_key}")
+        assert r_metrics.status_code == 200
+        assert r_metrics.json()["requests"]["total"] >= 0
+
+        # 5. Reset endpoint works
+        r_reset = await client.post(
+            "/admin/stats/reset", headers={"X-Admin-Key": settings.admin_api_key}
+        )
+        assert r_reset.status_code == 200
+        assert r_reset.json()["status"] == "reset"

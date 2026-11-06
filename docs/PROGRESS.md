@@ -2,36 +2,76 @@
 
 The agent updates this file. The user can read it anytime.
 
-**Current phase:** Phase 3: Web UI
-**Last updated:** 2026-11-05
+**Current phase:** Optimization: Harden and Speed Up (512 MB VPS)
+**Last updated:** 2026-11-06
 
 ## Phase status
 | Phase | Status | Approved by user |
 |---|---|---|
 | 1 Core RAG (CLI) | APPROVED/DONE | yes |
 | 2 Pipeline + API + eval | APPROVED/DONE | yes |
-| 3 Web UI | AWAITING APPROVAL | no |
+| 3 Web UI | APPROVED/DONE | yes |
+| Optimization | IN PROGRESS | no |
 | 4 Image upload | NOT STARTED | no |
 | 5 Video | NOT STARTED | no |
 | 6 Advanced | NOT STARTED | no |
 
 Status values: NOT STARTED | IN PROGRESS | AWAITING APPROVAL | APPROVED/DONE
 
-## Task checklist (current phase: Phase 3 Web UI)
-- [x] 1. Next.js App Router scaffold in `frontend/` with TypeScript, Tailwind CSS, Lucide icons, and design tokens from `DESIGN.md` (pitch green `#0F7B4B`, referee yellow `#F5C400`, card red `#D7263D`, dark mode)
-- [x] 2. Core API client (`frontend/src/lib/api.ts`): SSE streaming parser for `/chat`, `/health`, `/conversations`, `/laws`, `/laws/{num}`, `/chunks/{id}`, `/feedback`
-- [x] 3. Top navigation header: Wordmark/logo, Law browser view toggle, Language switcher (EN / FR / AR with RTL layout toggle), Theme toggle (Light/Dark mode)
-- [x] 4. Empty chat / Home screen: Friendly headline, subline, large chat input with experimental upload button, 2x3 suggested prompt cards
-- [x] 5. Active chat & streaming answer card: user message bubble, assistant card with short answer, streaming stage indicator, stop button, applicable law citation chips, collapsibles ("Possible interpretations", "What would change the decision", "Assumptions"), clarifying question interactive callout, feedback buttons (thumbs up/down, "Wrong law cited")
-- [x] 6. Citation drawer / slide-over (desktop side drawer, mobile bottom sheet): Law badge, section path breadcrumb, exact chunk text, metadata (page, edition, source), "Open in Law browser" and "Copy citation" buttons
-- [x] 7. Law browser view: searchable list of all 17 IFAB Laws with chunk counts, section tree viewer, reader pane with breadcrumb, and "Ask PlayRef about this section" quick prompt
-- [x] 8. Modals & Edge Cases: "Wrong law cited" feedback modal, rate limit warning banner, off-topic redirect card, error state retry, disclaimer footer
-- [x] 9. Full RTL mirroring & multi-language support (AR / FR / EN) with direction switching and localized UI strings
-- [x] 10. Mobile responsiveness (390px viewport, bottom sheets, mobile nav) and accessibility checks
+## Task checklist (current phase: Optimization)
+- [x] Step 0: Baseline and observability
+- [ ] Step 1: Server-side quota and rate limiting
+- [ ] Step 2: Cache correctness
+- [ ] Step 3: Embedding fallback
+- [ ] Step 4: Vector store simplification and index hygiene
+- [ ] Step 5: Latency reductions
+- [ ] Step 6: Semantic cache
+- [ ] Step 7: Server hardening and static FAQ pages
+
+## Optimization Phase Baselines & Progress
+
+### Step 0 Baseline Metrics (50 queries from `eval/golden.jsonl`, concurrency 2)
+- **Date:** 2026-11-06
+- **Test execution:** `py scripts/load_test.py --num-requests 50 --concurrency 2 --in-process`
+- **Total Requests:** 50 (50 successful, 0 failed, 0.0% error rate)
+- **Total Wall Clock:** 136.71s (0.37 req/s)
+- **Client Latency:**
+  - Min: 16.15 ms (Cache Hit)
+  - Max: 11,762.29 ms
+  - Avg: 5,462.06 ms
+  - p50: 7,384.65 ms
+  - p95: 9,683.86 ms
+  - p99: 11,762.29 ms
+  - TTFT p50: 7,384.65 ms
+- **Server Stage Breakdown (ms):**
+  - Router: p50: 1,177.2 ms | p95: 2,245.6 ms | avg: 1,247.21 ms
+  - Rewrite: p50: 1,335.2 ms | p95: 2,423.2 ms | avg: 1,422.00 ms
+  - Embed: p50: 0.9 ms | p95: 2.0 ms | avg: 0.93 ms
+  - Retrieve: p50: 8.9 ms | p95: 86.4 ms | avg: 13.91 ms
+  - Rerank: p50: 1,008.8 ms | p95: 1,452.2 ms | avg: 1,007.14 ms
+  - Generate: p50: 4,162.3 ms | p95: 5,933.9 ms | avg: 4,223.75 ms
+- **Memory RSS:**
+  - Initial RSS: 218.47 MB
+  - Final Current RSS: 250.73 MB
+  - Peak Observed RSS: 295.17 MB (strictly within 300 MB limit)
+- **Cache Performance (Cold Start + 15 Replayed Queries):**
+  - Exact Hits: 16
+  - Semantic Hits: 0
+  - Misses: 34
+  - Hit Rate: 32.0%
+- **Token Consumption:**
+  - Prompt Tokens: 11,277
+  - Completion Tokens: 45,138
+  - Total Tokens: 56,415
+  - Avg Tokens/Req: 1,128.3 tokens
 
 ## Decisions log
 | Date | Decision | Reason |
 |---|---|---|
+| 2026-11-06 | Observability engine `backend/app/metrics.py` & `/admin/stats` | Added low-overhead in-memory tracking of stage latencies, memory RSS, token counts, and cache performance protected by `ADMIN_API_KEY`. |
+| 2026-11-06 | `threading.RLock()` for thread-safe metrics | Avoids internal self-deadlocking when reading metrics from multiple nested inspection calls. |
+| 2026-11-06 | Non-blocking Redis fallback in rate limiter | Marks Redis as unavailable after first connection failure to prevent 4s timeout penalties on every subsequent incoming request. |
+| 2026-11-06 | Explicit SQLite connection in local `.env` | Prevents 8s connection timeout attempts towards Postgres when running locally. |
 | 2026-11-05 | Switch embeddings to local FastEmbed BGE-large (1024-dim) | Campus WAF on AIForge endpoint rate-limited repeated batch requests (Attack ID 20000008). Local inference avoids provider bans and runs offline with 0 latency. |
 | 2026-11-05 | Graceful degradation on cross-encoder reranker | If the remote rerank endpoint times out or errors, RerankerService immediately falls back to hybrid retrieval order with synthetic scores without breaking generation. |
 | 2026-11-05 | Singleton pattern on Qdrant local storage | QdrantLocal places file locks on data/qdrant_storage; singleton client ensures unified access across retriever, parent expander, and ingestion without lock contention. |

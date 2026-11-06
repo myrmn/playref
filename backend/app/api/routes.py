@@ -27,14 +27,47 @@ from backend.app.db.models import Conversation, Feedback, Message
 from backend.app.db.rate_limiter import rate_limiter
 from backend.app.db.session import get_db
 from backend.app.ingestion.indexer import get_qdrant_client
-from backend.app.rag.generate import generator
+from backend.app.logger import logger
+from backend.app.metrics import count_tokens, metrics_collector
 from backend.app.rag.cache import get_cached_answer, set_cached_answer
+from backend.app.rag.generate import generator
 from backend.app.rag.rerank import reranker_service
 from backend.app.rag.retrieve import retriever
 from backend.app.rag.rewrite import rewriter
 from backend.app.rag.router import router
 
 api_router = APIRouter()
+
+
+def verify_admin_key(request: Request, admin_key: str | None = None) -> None:
+    """Validate admin key from header or query param."""
+    header_key = request.headers.get("X-Admin-Key")
+    query_key = admin_key or request.query_params.get("admin_key")
+    provided = header_key or query_key
+    if not provided or provided != settings.admin_api_key:
+        raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing admin key")
+
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(request: Request, admin_key: str | None = None):
+    """Retrieve operational metrics, stage latencies, memory, and cache hit rates."""
+    verify_admin_key(request, admin_key)
+    return metrics_collector.get_stats()
+
+
+@api_router.get("/metrics")
+async def get_metrics(request: Request, admin_key: str | None = None):
+    """Alias for /admin/stats to support external scrapers."""
+    verify_admin_key(request, admin_key)
+    return metrics_collector.get_stats()
+
+
+@api_router.post("/admin/stats/reset")
+async def reset_admin_stats(request: Request, admin_key: str | None = None):
+    """Reset accumulated metrics for clean benchmarking runs."""
+    verify_admin_key(request, admin_key)
+    metrics_collector.reset()
+    return {"status": "reset", "timestamp": time.time()}
 
 
 @api_router.get("/health", response_model=HealthResponse)
@@ -89,6 +122,8 @@ async def chat_endpoint(
         for m in conv.messages[-6:]:
             history.append({"role": m.role, "content": m.content})
 
+    req_id = getattr(request.state, "request_id", str(uuid.uuid4()))
+
     async def sse_event_stream():
         start_total = time.perf_counter()
 
@@ -98,10 +133,38 @@ async def chat_endpoint(
             cached = await get_cached_answer(db, req.query, target_lang)
             if cached:
                 bot_msg_id = str(uuid.uuid4())
+                total_ms = round((time.perf_counter() - start_total) * 1000, 1)
+                prompt_toks = count_tokens(req.query)
+                comp_toks = count_tokens(cached.short_answer)
+
+                metrics_collector.record_request(
+                    request_id=req_id,
+                    stage_timings={"total": total_ms, "ttft": total_ms},
+                    cache_hit="exact",
+                    prompt_tokens=prompt_toks,
+                    completion_tokens=comp_toks,
+                    status_code=200,
+                )
+                logger.info(
+                    "Chat request completed (cache hit)",
+                    extra={
+                        "request_id": req_id,
+                        "stage": "chat_cache_hit",
+                        "duration_ms": total_ms,
+                        "ttft_ms": total_ms,
+                        "cache_hit": "exact",
+                        "tokens": {
+                            "prompt": prompt_toks,
+                            "completion": comp_toks,
+                            "total": prompt_toks + comp_toks,
+                        },
+                        "rss_mb": metrics_collector.get_process_rss_mb(),
+                    },
+                )
                 yield f"event: route\ndata: {json.dumps({'intent': 'rules_question', 'lang': target_lang, 'duration_ms': 1.0, 'cached': True})}\n\n"
                 yield f"event: delta\ndata: {json.dumps({'content': cached.short_answer})}\n\n"
                 yield f"event: answer\ndata: {json.dumps(cached.answer_json)}\n\n"
-                yield f"event: done\ndata: {json.dumps({'timings': {'total_ms': 5.0, 'cached': True}, 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
+                yield f"event: done\ndata: {json.dumps({'timings': {'total_ms': total_ms, 'cached': True}, 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
 
                 msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
                 msg_bot = Message(
@@ -142,8 +205,20 @@ async def chat_endpoint(
                 "language": target_lang,
             }
             bot_msg_id = str(uuid.uuid4())
+            total_ms = round((time.perf_counter() - start_total) * 1000, 1)
+            prompt_toks = count_tokens(req.query)
+            comp_toks = count_tokens(redirect_text)
+
+            metrics_collector.record_request(
+                request_id=req_id,
+                stage_timings={"router": route_ms, "total": total_ms, "ttft": total_ms},
+                cache_hit="miss",
+                prompt_tokens=prompt_toks,
+                completion_tokens=comp_toks,
+                status_code=200,
+            )
             yield f"event: answer\ndata: {json.dumps(final_obj)}\n\n"
-            yield f"event: done\ndata: {json.dumps({'total_ms': round((time.perf_counter() - start_total) * 1000, 1), 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
+            yield f"event: done\ndata: {json.dumps({'total_ms': total_ms, 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
 
             # Save messages
             msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
@@ -157,16 +232,6 @@ async def chat_endpoint(
             )
             db.add_all([msg_user, msg_bot])
             await db.commit()
-
-            # Cache verified response for future users
-            if not route_res.is_off_topic and not final_answer_payload.get("needs_more_info"):
-                await set_cached_answer(
-                    db,
-                    raw_query=req.query,
-                    short_answer=final_answer_payload.get("short_answer", ""),
-                    answer_json=final_answer_payload,
-                    language=target_lang,
-                )
             return
 
         # Step B: Query Rewrite
@@ -182,6 +247,8 @@ async def chat_endpoint(
             law_number_filter=rewrite_res.law_hint,
         )
         retrieve_ms = round((time.perf_counter() - t2) * 1000, 1)
+        embed_ms = getattr(retriever, "last_embed_ms", 0.0)
+        pure_retrieve_ms = max(0.0, round(retrieve_ms - embed_ms, 1))
 
         # Step D: Cross-Encoder Rerank
         t3 = time.perf_counter()
@@ -193,6 +260,8 @@ async def chat_endpoint(
         rerank_ms = round((time.perf_counter() - t3) * 1000, 1)
 
         # Step E: Grounded Generation (Streaming short_answer tokens then final answer)
+        t_gen_start = time.perf_counter()
+        ttft_ms = None
         final_answer_payload = None
         async for gen_event in generator.stream_generate(
             query=req.query,
@@ -200,20 +269,71 @@ async def chat_endpoint(
             language=target_lang,
         ):
             if gen_event["event"] == "delta":
+                if ttft_ms is None:
+                    ttft_ms = round((time.perf_counter() - start_total) * 1000, 1)
                 yield f"event: delta\ndata: {json.dumps(gen_event['data'])}\n\n"
             elif gen_event["event"] == "answer":
                 final_answer_payload = gen_event["data"]
                 yield f"event: answer\ndata: {json.dumps(final_answer_payload)}\n\n"
 
+        gen_ms = round((time.perf_counter() - t_gen_start) * 1000, 1)
+        if ttft_ms is None:
+            ttft_ms = round((time.perf_counter() - start_total) * 1000, 1)
+
         total_ms = round((time.perf_counter() - start_total) * 1000, 1)
         timings = {
             "route_ms": route_ms,
             "rewrite_ms": rewrite_ms,
-            "retrieve_ms": retrieve_ms,
+            "embed_ms": embed_ms,
+            "retrieve_ms": pure_retrieve_ms,
             "rerank_ms": rerank_ms,
+            "generate_ms": gen_ms,
+            "ttft_ms": ttft_ms,
             "total_ms": total_ms,
         }
         bot_msg_id = str(uuid.uuid4())
+
+        prompt_toks = count_tokens(req.query) + sum(
+            count_tokens(sc.chunk.clean_text) for sc in reranked
+        )
+        comp_toks = (
+            count_tokens(json.dumps(final_answer_payload)) if final_answer_payload else 0
+        )
+
+        metrics_collector.record_request(
+            request_id=req_id,
+            stage_timings={
+                "router": route_ms,
+                "rewrite": rewrite_ms,
+                "embed": embed_ms,
+                "retrieve": pure_retrieve_ms,
+                "rerank": rerank_ms,
+                "generate": gen_ms,
+                "ttft": ttft_ms,
+                "total": total_ms,
+            },
+            cache_hit="miss",
+            prompt_tokens=prompt_toks,
+            completion_tokens=comp_toks,
+            status_code=200,
+        )
+        logger.info(
+            "Chat SSE completed",
+            extra={
+                "request_id": req_id,
+                "stage": "chat_complete",
+                "duration_ms": total_ms,
+                "ttft_ms": ttft_ms,
+                "timings": timings,
+                "tokens": {
+                    "prompt": prompt_toks,
+                    "completion": comp_toks,
+                    "total": prompt_toks + comp_toks,
+                },
+                "rss_mb": metrics_collector.get_process_rss_mb(),
+            },
+        )
+
         yield f"event: done\ndata: {json.dumps({'timings': timings, 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
 
         # Persist to database
@@ -245,11 +365,24 @@ async def chat_endpoint(
         return StreamingResponse(sse_event_stream(), media_type="text/event-stream")
 
     # Non-streaming request
+    start_total = time.perf_counter()
     target_lang = req.language or "en"
     if not history:
         cached = await get_cached_answer(db, req.query, target_lang)
         if cached:
             bot_msg_id = str(uuid.uuid4())
+            total_ms = round((time.perf_counter() - start_total) * 1000, 1)
+            prompt_toks = count_tokens(req.query)
+            comp_toks = count_tokens(cached.short_answer)
+
+            metrics_collector.record_request(
+                request_id=req_id,
+                stage_timings={"total": total_ms, "ttft": total_ms},
+                cache_hit="exact",
+                prompt_tokens=prompt_toks,
+                completion_tokens=comp_toks,
+                status_code=200,
+            )
             msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
             msg_bot = Message(
                 id=bot_msg_id,
@@ -261,22 +394,18 @@ async def chat_endpoint(
             )
             db.add_all([msg_user, msg_bot])
             await db.commit()
-            return ChatResponse(
-                short_answer=cached.short_answer,
-                applicable_laws=cached.answer_json.get("applicable_laws", []),
-                interpretations=cached.answer_json.get("interpretations", []),
-                what_would_change_the_decision=cached.answer_json.get("what_would_change_the_decision", []),
-                assumptions=cached.answer_json.get("assumptions", []),
-                needs_more_info=cached.answer_json.get("needs_more_info", False),
-                clarifying_question=cached.answer_json.get("clarifying_question"),
-                language=cached.language,
-                conversation_id=conv_id,
-                message_id=bot_msg_id,
-                timings={"total_ms": 5.0, "cached": True},
-            )
+            return {
+                "conversation_id": conv_id,
+                "message_id": bot_msg_id,
+                "answer": cached.answer_json,
+                "timings": {"total_ms": total_ms, "cached": True},
+            }
 
+    t0 = time.perf_counter()
     route_res = await router.route(req.query)
+    route_ms = round((time.perf_counter() - t0) * 1000, 1)
     target_lang = req.language or route_res.lang
+
     if route_res.is_off_topic:
         answer_dict = {
             "short_answer": route_res.redirect_message
@@ -289,24 +418,90 @@ async def chat_endpoint(
             "clarifying_question": None,
             "language": target_lang,
         }
+        reranked = []
+        pure_retrieve_ms = 0.0
+        rewrite_ms = 0.0
+        embed_ms = 0.0
+        rerank_ms = 0.0
+        gen_ms = 0.0
     else:
+        t1 = time.perf_counter()
         rewrite_res = await rewriter.rewrite(req.query, history=history)
+        rewrite_ms = round((time.perf_counter() - t1) * 1000, 1)
+
+        t2 = time.perf_counter()
         candidates = await retriever.retrieve(
             query=rewrite_res.standalone_query,
             top_k=settings.retrieve_top_k,
             law_number_filter=rewrite_res.law_hint,
         )
+        retrieve_ms = round((time.perf_counter() - t2) * 1000, 1)
+        embed_ms = getattr(retriever, "last_embed_ms", 0.0)
+        pure_retrieve_ms = max(0.0, round(retrieve_ms - embed_ms, 1))
+
+        t3 = time.perf_counter()
         reranked = await reranker_service.rerank(
             query=rewrite_res.standalone_query,
             candidates=candidates,
             top_k=settings.rerank_top_k,
         )
+        rerank_ms = round((time.perf_counter() - t3) * 1000, 1)
+
+        t4 = time.perf_counter()
         answer = await generator.generate(
             query=req.query,
             scored_chunks=reranked,
             language=target_lang,
         )
+        gen_ms = round((time.perf_counter() - t4) * 1000, 1)
         answer_dict = answer.model_dump()
+
+    total_ms = round((time.perf_counter() - start_total) * 1000, 1)
+    prompt_toks = count_tokens(req.query) + sum(
+        count_tokens(sc.chunk.clean_text) for sc in reranked
+    )
+    comp_toks = count_tokens(json.dumps(answer_dict))
+
+    metrics_collector.record_request(
+        request_id=req_id,
+        stage_timings={
+            "router": route_ms,
+            "rewrite": rewrite_ms,
+            "embed": embed_ms,
+            "retrieve": pure_retrieve_ms,
+            "rerank": rerank_ms,
+            "generate": gen_ms,
+            "ttft": total_ms,
+            "total": total_ms,
+        },
+        cache_hit="miss",
+        prompt_tokens=prompt_toks,
+        completion_tokens=comp_toks,
+        status_code=200,
+    )
+    logger.info(
+        "Chat non-streaming completed",
+        extra={
+            "request_id": req_id,
+            "stage": "chat_complete_non_stream",
+            "duration_ms": total_ms,
+            "timings": {
+                "route_ms": route_ms,
+                "rewrite_ms": rewrite_ms,
+                "embed_ms": embed_ms,
+                "retrieve_ms": pure_retrieve_ms,
+                "rerank_ms": rerank_ms,
+                "generate_ms": gen_ms,
+                "total_ms": total_ms,
+            },
+            "tokens": {
+                "prompt": prompt_toks,
+                "completion": comp_toks,
+                "total": prompt_toks + comp_toks,
+            },
+            "rss_mb": metrics_collector.get_process_rss_mb(),
+        },
+    )
 
     # Save to db
     bot_msg_id = str(uuid.uuid4())

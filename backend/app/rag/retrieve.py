@@ -22,6 +22,7 @@ class HybridRetriever:
     def __init__(self, collection_name: str = settings.qdrant_collection, client=None):
         self.collection_name = collection_name
         self._client = client
+        self.last_embed_ms: float = 0.0
 
     @property
     def client(self):
@@ -37,9 +38,13 @@ class HybridRetriever:
         rrf_k: int = 60,
     ) -> list[ScoredChunk]:
         """Perform hybrid retrieval with dense vector + sparse BM25 fusion."""
+        import time
+
         # 1. Build query vectors
+        t_emb = time.perf_counter()
         dense_vec = await embedding_client.embed_query(query)
         sparse_indices, sparse_values = sparse_encoder.encode(query)
+        self.last_embed_ms = round((time.perf_counter() - t_emb) * 1000, 1)
 
         # 2. Build optional filter
         query_filter = None

@@ -10,22 +10,24 @@ from backend.app.logger import logger
 
 _memory_rate_limit: dict[str, list[float]] = defaultdict(list)
 _redis_client = None
+_redis_attempted = False
 
 
 async def get_redis():
-    global _redis_client
-    if _redis_client is not None:
+    global _redis_client, _redis_attempted
+    if _redis_attempted:
         return _redis_client
 
+    _redis_attempted = True
     if settings.redis_url:
         try:
-            r = aioredis.from_url(settings.redis_url, decode_responses=True)
+            r = aioredis.from_url(settings.redis_url, decode_responses=True, socket_connect_timeout=1.0)
             await r.ping()
             logger.info(f"Connected to Redis at {settings.redis_url}")
             _redis_client = r
             return _redis_client
         except Exception:
-            pass
+            logger.info("Redis not available; using in-memory rate limiting")
     return None
 
 

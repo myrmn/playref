@@ -137,11 +137,23 @@ class EmbeddingClient:
         return [item["embedding"] for item in sorted_data]
 
     async def embed_dense(self, texts: list[str]) -> list[list[float]]:
-        """Generate dense embeddings via local model or API."""
+        """Generate dense embeddings via local model, API, or fallback."""
         if not texts:
             return []
 
+        from backend.app.metrics import metrics_collector
+
         start = time.perf_counter()
+
+        if self.provider in ("fallback", "mock"):
+            metrics_collector.record_embedding_event("fallback_activation")
+            vecs = [self._fallback_dense_embed(t, dim=settings.embedding_dim) for t in texts]
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+            logger.info(
+                f"Deterministic fallback embedded {len(texts)} texts in {duration_ms}ms",
+                extra={"duration_ms": duration_ms, "stage": "embed_dense_fallback"},
+            )
+            return vecs
 
         if self.provider in ("local", "fastembed", "bge"):
             model = self._get_local_model()
@@ -155,9 +167,12 @@ class EmbeddingClient:
             return vecs
 
         # Fallback to remote API with graceful local fallback if blocked by WAF
+        metrics_collector.record_embedding_event("api_call")
         try:
             vecs = await self._embed_dense_api(texts)
         except Exception as exc:
+            metrics_collector.record_embedding_event("api_failure")
+            metrics_collector.record_embedding_event("fallback_activation")
             logger.warning(
                 f"Remote embedding endpoint failed or blocked by WAF ({exc}). Falling back to local deterministic embeddings."
             )
