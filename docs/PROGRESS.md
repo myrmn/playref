@@ -81,8 +81,15 @@ Status values: NOT STARTED | IN PROGRESS | AWAITING APPROVAL | APPROVED/DONE
 | 2026-11-05 | Dynamic RTL switching via `document.documentElement.dir` | Dynamically flips document layout, drawer slide animations, and Cairo font for Arabic (`ar`) while preserving LTR for English and French. |
 | 2026-11-05 | Hermetic Qdrant mocking in unit tests | Avoids unit test failures when local vector storage has not yet undergone full ingestion by mocking `scroll()` and `count()` in `test_api.py`. |
 
+## Next Steps & How to Resume
+- **Current Position:** Optimization Phase, **Step 0 is complete**. Ready to start **Step 1: Server-side quota and rate limiting**.
+- **When resuming:**
+  1. Review Step 0 baseline metrics in this document and [`docs/OPTIMIZATION_PROGRESS.md`](file:///c:/Users/Mohamed%20Islem/Desktop/playref/docs/OPTIMIZATION_PROGRESS.md).
+  2. Run `py -m pytest backend/tests/ -v` to ensure all 17 tests pass.
+  3. Approve starting **Step 1** (Server-side HMAC/JWT session cookies, per-IP sliding rate limits, real Supabase JWT auth verification, member caps, and emergency global token budget).
+
 ## Known issues / tech debt
 - Remote Qdrant runs in local embedded mode (data/qdrant_storage) when Docker Desktop service is inactive; Docker Compose configuration is ready for production container deployment.
 
 ## Open questions for the user
-- Phase 3 is complete and ready for approval.
+- Step 0 complete. Awaiting user approval to begin Step 1.
