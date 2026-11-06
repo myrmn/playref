@@ -1,15 +1,15 @@
 "use client";
 
 import React from "react";
-import { BookOpen, MessageSquare, Moon, Sun, CheckCircle2, AlertCircle, Menu, X } from "lucide-react";
+import { BookOpen, MessageSquare, Moon, Sun, CheckCircle2, AlertCircle, Menu, X, Info } from "lucide-react";
 import { LanguageCode } from "@/lib/types";
 import { translations } from "@/lib/translations";
 
 interface HeaderProps {
   currentLanguage: LanguageCode;
   onLanguageChange: (lang: LanguageCode) => void;
-  activeView: "chat" | "laws";
-  onViewChange: (view: "chat" | "laws") => void;
+  activeView: "chat" | "laws" | "about";
+  onViewChange: (view: "chat" | "laws" | "about") => void;
   isDark: boolean;
   onToggleTheme: () => void;
   isBackendConnected: boolean;
@@ -112,6 +112,20 @@ export function Header({
             >
               <BookOpen className="w-4 h-4" />
               <span>{t.lawBrowser}</span>
+            </button>
+            <button
+              onClick={() => onViewChange("about")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all ${
+                activeView === "about"
+                  ? "bg-white dark:bg-[#16201B] shadow-sm font-semibold"
+                  : "text-muted hover:text-foreground opacity-70 hover:opacity-100"
+              }`}
+              style={{
+                color: activeView === "about" ? "var(--pitch-green)" : "var(--text-muted)",
+              }}
+            >
+              <Info className="w-4 h-4" />
+              <span>{t.about}</span>
             </button>
           </nav>
         </div>

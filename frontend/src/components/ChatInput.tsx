@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { ArrowUp, Paperclip, Square, X, Image as ImageIcon } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 import { LanguageCode } from "@/lib/types";
 import { translations } from "@/lib/translations";
-import { ExperimentalBadge } from "./ExperimentalBadge";
 
 interface ChatInputProps {
   language: LanguageCode;
-  onSend: (text: string, mediaFile?: File | null) => void;
+  onSend: (text: string) => void;
   onStop: () => void;
   isStreaming: boolean;
   disabled?: boolean;
@@ -23,39 +22,13 @@ export function ChatInput({
 }: ChatInputProps) {
   const t = translations[language];
   const [text, setText] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleFileChange = (file: File) => {
-    setSelectedFile(file);
-    if (file.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    } else {
-      setPreviewUrl(null);
-    }
-  };
-
-  const handleRemoveFile = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if ((text.trim() || selectedFile) && !isStreaming && !disabled) {
-      onSend(text.trim(), selectedFile);
+    if (text.trim() && !isStreaming && !disabled) {
+      onSend(text.trim());
       setText("");
-      handleRemoveFile();
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -76,75 +49,14 @@ export function ChatInput({
     e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`;
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
-    }
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto px-4 pb-4">
-      {/* Media thumbnail preview */}
-      {selectedFile && (
-        <div className="mb-2 flex items-center gap-3 p-2 px-3 rounded-xl border bg-white dark:bg-[#16201B] shadow-xs" style={{ borderColor: "var(--border-color)" }}>
-          {previewUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={previewUrl}
-              alt="Uploaded preview"
-              className="w-12 h-12 object-cover rounded-lg border"
-              style={{ borderColor: "var(--border-color)" }}
-            />
-          ) : (
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-800">
-              <ImageIcon className="w-5 h-5" />
-            </div>
-          )}
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold truncate text-foreground">
-                {selectedFile.name}
-              </span>
-              <ExperimentalBadge label={t.experimental} size="sm" />
-            </div>
-            <p className="text-[11px] opacity-60">
-              {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {t.experimentalHelperText}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleRemoveFile}
-            className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Input Container */}
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`relative flex flex-col rounded-2xl border transition-all duration-200 shadow-sm ${
-          isDragOver ? "border-dashed border-emerald-500 scale-[1.01]" : ""
-        }`}
+        className="relative flex flex-col rounded-2xl border transition-all duration-200 shadow-sm"
         style={{
           backgroundColor: "var(--bg-surface)",
-          borderColor: isDragOver ? "var(--pitch-green)" : "var(--border-color)",
+          borderColor: "var(--border-color)",
         }}
       >
         <textarea
@@ -161,39 +73,13 @@ export function ChatInput({
 
         {/* Action Toolbar */}
         <div className="flex items-center justify-between px-3 pb-2.5 pt-1">
-          {/* Left tools: Upload button with tooltip & badge */}
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*,video/*"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleFileChange(e.target.files[0]);
-                }
-              }}
-            />
-
-            <button
-              type="button"
-              disabled={disabled || isStreaming}
-              onClick={() => fileInputRef.current?.click()}
-              title={t.experimentalUploadTooltip}
-              className="flex items-center gap-1.5 p-1.5 px-2.5 rounded-xl border text-xs font-medium opacity-70 hover:opacity-100 hover:border-emerald-600 transition-all cursor-pointer disabled:opacity-30"
-              style={{
-                borderColor: "var(--border-color)",
-                color: "var(--text-main)",
-              }}
-            >
-              <Paperclip className="w-4 h-4" />
-              <span className="hidden sm:inline-block text-[11px]">Upload</span>
-              <ExperimentalBadge label={t.experimental} size="sm" />
-            </button>
+          {/* Helpful suggestion hint */}
+          <div className="text-[11px] opacity-50 px-1 hidden sm:block select-none" style={{ color: "var(--text-muted)" }}>
+            Press Enter to ask PlayRef
           </div>
 
           {/* Right action: Send or Stop */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ms-auto">
             {isStreaming ? (
               <button
                 type="button"
@@ -207,7 +93,7 @@ export function ChatInput({
             ) : (
               <button
                 type="button"
-                disabled={(!text.trim() && !selectedFile) || disabled}
+                disabled={!text.trim() || disabled}
                 onClick={() => handleSubmit()}
                 className="flex items-center justify-center w-8 h-8 rounded-xl text-white shadow-xs transition-all active:scale-95 disabled:opacity-30 disabled:scale-100"
                 style={{ backgroundColor: "var(--pitch-green)" }}
@@ -222,4 +108,3 @@ export function ChatInput({
     </div>
   );
 }
-

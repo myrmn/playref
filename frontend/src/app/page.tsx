@@ -10,6 +10,7 @@ import { StageIndicator } from "@/components/StageIndicator";
 import { CitationDrawer } from "@/components/CitationDrawer";
 import { FeedbackModal } from "@/components/FeedbackModal";
 import { LawBrowser } from "@/components/LawBrowser";
+import { AboutView } from "@/components/AboutView";
 import { HistorySidebar } from "@/components/HistorySidebar";
 import { DisclaimerFooter } from "@/components/DisclaimerFooter";
 import { useChat } from "@/hooks/useChat";
@@ -20,7 +21,7 @@ import { translations } from "@/lib/translations";
 
 export default function Home() {
   const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>("en");
-  const [activeView, setActiveView] = useState<"chat" | "laws">("chat");
+  const [activeView, setActiveView] = useState<"chat" | "laws" | "about">("chat");
   const [selectedLawNumber, setSelectedLawNumber] = useState<number | null>(null);
 
   // Modals & Drawers
@@ -54,6 +55,24 @@ export default function Home() {
     document.documentElement.dir = currentLanguage === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = currentLanguage;
   }, [currentLanguage]);
+
+  // Check URL query parameters for initial view
+  useEffect(() => {
+    let isMounted = true;
+    Promise.resolve().then(() => {
+      if (!isMounted) return;
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const v = params.get("view");
+        if (v === "laws" || v === "about" || v === "chat") {
+          setActiveView(v);
+        }
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Initial Health check & recent conversations load
   useEffect(() => {
@@ -128,6 +147,11 @@ export default function Home() {
             selectedLawNumber={selectedLawNumber}
             onSelectLawNumber={setSelectedLawNumber}
             onAskAboutSection={handleAskAboutSection}
+          />
+        ) : activeView === "about" ? (
+          <AboutView
+            language={currentLanguage}
+            onNavigate={(view) => setActiveView(view)}
           />
         ) : (
           <div className="flex-1 flex flex-col justify-between">
@@ -247,7 +271,7 @@ export default function Home() {
             >
               <ChatInput
                 language={currentLanguage}
-                onSend={(text, file) => sendMessage(text, file, currentLanguage)}
+                onSend={(text) => sendMessage(text, null, currentLanguage)}
                 onStop={stopStreaming}
                 isStreaming={isStreaming}
               />

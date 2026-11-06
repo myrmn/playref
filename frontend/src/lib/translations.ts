@@ -8,9 +8,34 @@ export interface TranslationDictionary {
   inputPlaceholder: string;
   send: string;
   stop: string;
-  experimental: string;
-  experimentalUploadTooltip: string;
-  experimentalHelperText: string;
+  about: string;
+  aboutView: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    whatIsPlayRef: string;
+    whatIsPlayRefDesc: string;
+    featuresTitle: string;
+    feature1Title: string;
+    feature1Desc: string;
+    feature2Title: string;
+    feature2Desc: string;
+    feature3Title: string;
+    feature3Desc: string;
+    feature4Title: string;
+    feature4Desc: string;
+    howItWorksTitle: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    refereeNoticeTitle: string;
+    refereeNoticeDesc: string;
+    ctaButton: string;
+    browseLawsBtn: string;
+  };
   lawBrowser: string;
   newChat: string;
   recentChats: string;
@@ -91,9 +116,34 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     inputPlaceholder: "Describe a situation or ask about a Law (e.g. 'Can a player score from a goal kick?')...",
     send: "Send",
     stop: "Stop",
-    experimental: "Experimental",
-    experimentalUploadTooltip: "Upload match image or short clip (Experimental perception)",
-    experimentalHelperText: "Image and video analysis are experimental and cannot make definitive refereeing decisions.",
+    about: "About",
+    aboutView: {
+      badge: "Rules Made Simple",
+      title: "What is PlayRef?",
+      subtitle: "Your friendly guide to football's official rules. No confusing jargon, no guessing—just clear answers directly from the official IFAB rulebook.",
+      whatIsPlayRef: "Why does PlayRef exist?",
+      whatIsPlayRefDesc: "Have you ever argued with friends about a referee's controversial call? Wondered why a goal was disallowed after an accidental handball? Or wanted to know if a player can score directly from a throw-in? Football rules can sometimes feel complicated. PlayRef exists to help fans, players, and coaches understand what the rules actually say in plain everyday language.",
+      featuresTitle: "What PlayRef Does For You",
+      feature1Title: "Ask in Plain Words",
+      feature1Desc: "You don't need to know rule numbers or legal terms. Just describe what happened on the pitch in your own words, and PlayRef understands.",
+      feature2Title: "Directly from the Official Rulebook",
+      feature2Desc: "Every answer is backed by the official IFAB (International Football Association Board) Laws of the Game. We always show you the exact rule clause so you can see it for yourself.",
+      feature3Title: "Explains the 'Why'",
+      feature3Desc: "Referee decisions often depend on details (like whether a handball was natural or deliberate). PlayRef explains the different angles referees consider and what would change the call.",
+      feature4Title: "Works in 3 Languages",
+      feature4Desc: "Chat naturally in English, French, or Arabic with full right-to-left reading support and clean typography.",
+      howItWorksTitle: "How to Use PlayRef in 3 Easy Steps",
+      step1Title: "1. Ask your question",
+      step1Desc: "Type any football situation into the chat bar, or click one of the suggested cards on the home screen.",
+      step2Title: "2. Read the simple breakdown",
+      step2Desc: "Get a direct explanation of the rule, common interpretations, and what the referee looks for.",
+      step3Title: "3. Check the official rule",
+      step3Desc: "Click any green rule chip to slide open the exact wording from the official IFAB handbook.",
+      refereeNoticeTitle: "A Friendly Note on Refereeing",
+      refereeNoticeDesc: "PlayRef is here to help you understand and discuss the rules—it does not replace the match referee! Football happens fast, and human referees judge speed, intent, and intensity on the pitch in real time.",
+      ctaButton: "Start Asking Questions",
+      browseLawsBtn: "Browse All 17 Laws",
+    },
     lawBrowser: "Law Browser",
     newChat: "New Chat",
     recentChats: "Recent Questions",
@@ -199,9 +249,34 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     inputPlaceholder: "Décrivez une situation de match ou posez une question sur une Loi...",
     send: "Envoyer",
     stop: "Arrêter",
-    experimental: "Expérimental",
-    experimentalUploadTooltip: "Téléverser une image ou un extrait vidéo (Perception expérimentale)",
-    experimentalHelperText: "L'analyse d'images et de vidéos est expérimentale et ne constitue pas une décision officielle.",
+    about: "À propos",
+    aboutView: {
+      badge: "Les règles en toute simplicité",
+      title: "Qu'est-ce que PlayRef ?",
+      subtitle: "Votre compagnon pour comprendre les règles officielles du football. Pas de jargon technique, pas d'approximations : des réponses claires directement issues du règlement officiel de l'IFAB.",
+      whatIsPlayRef: "Pourquoi PlayRef existe-t-il ?",
+      whatIsPlayRefDesc: "Vous avez déjà débattu entre amis d'un coup de sifflet litigieux ? Vous vous demandez pourquoi un but a été refusé pour une main involontaire, ou si l'on peut marquer directement sur une touche ? Les lois du football peuvent sembler complexes. PlayRef a été créé pour permettre aux supporters, joueurs et entraîneurs de comprendre facilement ce que dit réellement le règlement, en français simple.",
+      featuresTitle: "Ce que PlayRef vous apporte",
+      feature1Title: "Posez vos questions simplement",
+      feature1Desc: "Pas besoin de connaître les numéros d'articles ou le jargon légal. Décrivez simplement l'action avec vos propres mots, et PlayRef vous répond.",
+      feature2Title: "Fidèle au règlement officiel",
+      feature2Desc: "Chaque réponse s'appuie directement sur les Lois du Jeu officielles de l'IFAB. Nous citons toujours la clause exacte pour que vous puissiez vérifier de vos propres yeux.",
+      feature3Title: "Comprendre le pourquoi",
+      feature3Desc: "Une décision arbitrale dépend souvent de nuances (mouvement naturel ou délibéré). PlayRef vous explique les critères pris en compte par les arbitres et ce qui peut changer la décision.",
+      feature4Title: "Disponible en 3 langues",
+      feature4Desc: "Posez vos questions en français, anglais ou arabe, avec une interface fluide et adaptée.",
+      howItWorksTitle: "Comment utiliser PlayRef en 3 étapes",
+      step1Title: "1. Posez votre question",
+      step1Desc: "Écrivez votre situation dans la barre de discussion ou cliquez sur l'un des exemples proposés.",
+      step2Title: "2. Lisez l'explication claire",
+      step2Desc: "Découvrez la règle applicable, les interprétations possibles et ce qui peut faire basculer la décision.",
+      step3Title: "3. Consultez le texte officiel",
+      step3Desc: "Cliquez sur n'importe quelle puce verte pour afficher le texte officiel du livret IFAB.",
+      refereeNoticeTitle: "Une note amicale sur l'arbitrage",
+      refereeNoticeDesc: "PlayRef vous aide à comprendre et discuter des règles, mais ne remplace pas l'arbitre sur le terrain ! Le football va vite, et les arbitres jugent la vitesse, l'angle et l'intensité en direct.",
+      ctaButton: "Poser une question",
+      browseLawsBtn: "Parcourir les 17 Lois",
+    },
     lawBrowser: "Navigateur des Lois",
     newChat: "Nouvelle discussion",
     recentChats: "Questions récentes",
@@ -307,9 +382,34 @@ export const translations: Record<LanguageCode, TranslationDictionary> = {
     inputPlaceholder: "صف حالة تحكيمية أو اسأل عن قانون (مثلاً: هل يمكن تسجيل هدف مباشرة من ركلة مرمى؟)...",
     send: "إرسال",
     stop: "إيقاف",
-    experimental: "تجريبي",
-    experimentalUploadTooltip: "رفع لقطة أو فيديو قصير (تحليل بصري تجريبي)",
-    experimentalHelperText: "التحليل البصري للصور والفيديو ميزة تجريبية ولا يُصدر قرارات تحكيمية قطعية.",
+    about: "عن بلاي ريف",
+    aboutView: {
+      badge: "قوانين كرة القدم ببساطة",
+      title: "ما هو بلاي ريف (PlayRef)؟",
+      subtitle: "دليلك السهل والموثوق لفهم قوانين كرة القدم الرسمية. بدون مصطلحات معقدة أو تعقيد—إجابات واضحة ومباشرة مستندة إلى كتيب مجلس الاتحاد الدولي (IFAB).",
+      whatIsPlayRef: "لماذا تم إنشاء بلاي ريف؟",
+      whatIsPlayRefDesc: "هل اختلفت يوماً مع أصدقائك حول قرار تحكيمي مثير للجدل؟ هل تساءلت لماذا أُلغي هدف بسبب لمسة يد غير مقصودة، أو هل يمكن تسجيل هدف مباشرة من رمية تماس؟ قوانين كرة القدم قد تبدو معقدة أحياناً. صُمم بلاي ريف لمساعدة الجماهير واللاعبين والمدربين على معرفة ما تنص عليه اللوائح الرسمية بأسلوب بسيط ومفهوم للجميع.",
+      featuresTitle: "ماذا يقدم لك بلاي ريف؟",
+      feature1Title: "اسأل بكلماتك البسيطة",
+      feature1Desc: "لست بحاجة لحفظ أرقام القوانين أو المصطلحات القانونية. صف اللقطة التي حدثت على أرض الملعب بأسلوبك اليومي المعتاد.",
+      feature2Title: "مستند مباشرة إلى اللائحة الرسمية",
+      feature2Desc: "كل إجابة مدعومة بنص صريح من قوانين اللعبة الرسمية الصادرة عن مجلس (IFAB)، مع رابط مباشر للبند الأصلي لتتأكد بنفسك.",
+      feature3Title: "توضيح الأسباب والزوايا المختلفة",
+      feature3Desc: "قرارات الحكام تعتمد غالباً على تفاصيل دقيقة (مثل لمسة اليد الطبيعية مقابل المتعمدة). يوضح لك بلاي ريف ما يضعه الحكم في اعتباره وما الذي قد يغير القرار.",
+      feature4Title: "يدعم 3 لغات بواجهة كاملة",
+      feature4Desc: "تحدث بالعربية أو الإنجليزية أو الفرنسية، مع محاذاة كاملة من اليمين إلى اليسار وخط عربي واضح ومريح للعين.",
+      howItWorksTitle: "كيف تستخدم بلاي ريف في 3 خطوات سهلة؟",
+      step1Title: "1. اطرح سؤالك",
+      step1Desc: "اكتب الحالة التحكيمية في صندوق المحادثة، أو اختر إحدى الحالات المقترحة في الصفحة الرئيسية.",
+      step2Title: "2. اقرأ التفسير المبسط",
+      step2Desc: "ستحصل على إجابة واضحة تشرح القانون المطبق، والتفسيرات الممكنة، والعوامل المؤثرة.",
+      step3Title: "3. طالع النص الرسمي",
+      step3Desc: "اضغط على أي بطاقة قانون خضراء لقراءة البند الحرفي المقتبس من الكتيب الرسمي.",
+      refereeNoticeTitle: "تنويه ودي بشأن التحكيم",
+      refereeNoticeDesc: "بلاي ريف يساعدك على فهم القوانين والنقاش حولها—لكنه لا يحل أبداً محل حكم المباراة! كرة القدم لعبة سريعة وحكام الميدان يقيمون السرعة والقصد وشدة الاحتكاك في جزء من الثانية.",
+      ctaButton: "ابدأ بطرح سؤالك الآن",
+      browseLawsBtn: "تصفح القوانين الـ 17",
+    },
     lawBrowser: "مستعرض القوانين",
     newChat: "محادثة جديدة",
     recentChats: "الأسئلة الأخيرة",
