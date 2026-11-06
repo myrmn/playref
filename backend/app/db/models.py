@@ -64,3 +64,22 @@ class Feedback(Base):
     )
 
     message: Mapped["Message"] = relationship("Message", back_populates="feedbacks")
+
+
+class QACache(Base):
+    __tablename__ = "qa_cache"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    normalized_query: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    raw_query: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(String(10), default="en")
+    short_answer: Mapped[str] = mapped_column(Text)
+    answer_json: Mapped[dict] = mapped_column(JSON)
+    hit_count: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+    last_accessed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
+

@@ -15,6 +15,10 @@ interface HeaderProps {
   isBackendConnected: boolean;
   onToggleHistory?: () => void;
   isHistoryOpen?: boolean;
+  userEmail?: string | null;
+  guestQueriesRemaining?: number;
+  onOpenAuth?: () => void;
+  onSignOut?: () => void;
 }
 
 export function Header({
@@ -27,6 +31,10 @@ export function Header({
   isBackendConnected,
   onToggleHistory,
   isHistoryOpen,
+  userEmail,
+  guestQueriesRemaining,
+  onOpenAuth,
+  onSignOut,
 }: HeaderProps) {
   const t = translations[currentLanguage];
 
@@ -151,6 +159,48 @@ export function Header({
               {isBackendConnected ? t.status.connected : t.status.error}
             </span>
           </div>
+
+          {/* Member / Guest Quota Pill */}
+          {userEmail ? (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                <span>✓ Member</span>
+              </span>
+              <button
+                type="button"
+                onClick={onSignOut}
+                className="text-[11px] opacity-70 hover:opacity-100 underline transition-opacity"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all hover:scale-105 active:scale-95 shadow-xs"
+              style={{
+                backgroundColor:
+                  guestQueriesRemaining !== undefined && guestQueriesRemaining <= 1
+                    ? "var(--referee-yellow-bg)"
+                    : "var(--bg-tint)",
+                borderColor:
+                  guestQueriesRemaining !== undefined && guestQueriesRemaining <= 1
+                    ? "var(--referee-yellow-border)"
+                    : "rgba(15, 123, 75, 0.25)",
+                color:
+                  guestQueriesRemaining !== undefined && guestQueriesRemaining <= 1
+                    ? "#926800"
+                    : "var(--pitch-green)",
+              }}
+              title="Click to sign in for unlimited questions"
+            >
+              <span className="text-[11px]">
+                {guestQueriesRemaining !== undefined ? `${guestQueriesRemaining}/5 free` : "Sign In"}
+              </span>
+            </button>
+          )}
 
           {/* Language Switcher */}
           <div className="flex items-center rounded-lg border p-0.5 text-xs font-semibold" style={{ borderColor: "var(--border-color)", backgroundColor: "var(--bg-surface)" }}>

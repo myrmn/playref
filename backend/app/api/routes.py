@@ -28,6 +28,7 @@ from backend.app.db.rate_limiter import rate_limiter
 from backend.app.db.session import get_db
 from backend.app.ingestion.indexer import get_qdrant_client
 from backend.app.rag.generate import generator
+from backend.app.rag.cache import get_cached_answer, set_cached_answer
 from backend.app.rag.rerank import reranker_service
 from backend.app.rag.retrieve import retriever
 from backend.app.rag.rewrite import rewriter
@@ -91,6 +92,30 @@ async def chat_endpoint(
     async def sse_event_stream():
         start_total = time.perf_counter()
 
+        # Step 0: Fast Q&A Cache lookup (avoids 100% of LLM tokens if already answered)
+        target_lang = req.language or "en"
+        if not history:
+            cached = await get_cached_answer(db, req.query, target_lang)
+            if cached:
+                bot_msg_id = str(uuid.uuid4())
+                yield f"event: route\ndata: {json.dumps({'intent': 'rules_question', 'lang': target_lang, 'duration_ms': 1.0, 'cached': True})}\n\n"
+                yield f"event: delta\ndata: {json.dumps({'content': cached.short_answer})}\n\n"
+                yield f"event: answer\ndata: {json.dumps(cached.answer_json)}\n\n"
+                yield f"event: done\ndata: {json.dumps({'timings': {'total_ms': 5.0, 'cached': True}, 'conversation_id': conv_id, 'message_id': bot_msg_id})}\n\n"
+
+                msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
+                msg_bot = Message(
+                    id=bot_msg_id,
+                    conversation_id=conv_id,
+                    role="assistant",
+                    content=cached.short_answer,
+                    answer_json=cached.answer_json,
+                    retrieved_chunk_ids=[],
+                )
+                db.add_all([msg_user, msg_bot])
+                await db.commit()
+                return
+
         # Step A: Routing
         t0 = time.perf_counter()
         route_res = await router.route(req.query)
@@ -132,6 +157,16 @@ async def chat_endpoint(
             )
             db.add_all([msg_user, msg_bot])
             await db.commit()
+
+            # Cache verified response for future users
+            if not route_res.is_off_topic and not final_answer_payload.get("needs_more_info"):
+                await set_cached_answer(
+                    db,
+                    raw_query=req.query,
+                    short_answer=final_answer_payload.get("short_answer", ""),
+                    answer_json=final_answer_payload,
+                    language=target_lang,
+                )
             return
 
         # Step B: Query Rewrite
@@ -196,10 +231,50 @@ async def chat_endpoint(
             db.add_all([msg_user, msg_bot])
             await db.commit()
 
+            # Cache verified response for future users
+            if not route_res.is_off_topic and not final_answer_payload.get("needs_more_info"):
+                await set_cached_answer(
+                    db,
+                    raw_query=req.query,
+                    short_answer=final_answer_payload.get("short_answer", ""),
+                    answer_json=final_answer_payload,
+                    language=target_lang,
+                )
+
     if req.stream:
         return StreamingResponse(sse_event_stream(), media_type="text/event-stream")
 
     # Non-streaming request
+    target_lang = req.language or "en"
+    if not history:
+        cached = await get_cached_answer(db, req.query, target_lang)
+        if cached:
+            bot_msg_id = str(uuid.uuid4())
+            msg_user = Message(conversation_id=conv_id, role="user", content=req.query)
+            msg_bot = Message(
+                id=bot_msg_id,
+                conversation_id=conv_id,
+                role="assistant",
+                content=cached.short_answer,
+                answer_json=cached.answer_json,
+                retrieved_chunk_ids=[],
+            )
+            db.add_all([msg_user, msg_bot])
+            await db.commit()
+            return ChatResponse(
+                short_answer=cached.short_answer,
+                applicable_laws=cached.answer_json.get("applicable_laws", []),
+                interpretations=cached.answer_json.get("interpretations", []),
+                what_would_change_the_decision=cached.answer_json.get("what_would_change_the_decision", []),
+                assumptions=cached.answer_json.get("assumptions", []),
+                needs_more_info=cached.answer_json.get("needs_more_info", False),
+                clarifying_question=cached.answer_json.get("clarifying_question"),
+                language=cached.language,
+                conversation_id=conv_id,
+                message_id=bot_msg_id,
+                timings={"total_ms": 5.0, "cached": True},
+            )
+
     route_res = await router.route(req.query)
     target_lang = req.language or route_res.lang
     if route_res.is_off_topic:
@@ -248,6 +323,15 @@ async def chat_endpoint(
     )
     db.add_all([msg_user, msg_bot])
     await db.commit()
+
+    if not route_res.is_off_topic and not answer_dict.get("needs_more_info"):
+        await set_cached_answer(
+            db,
+            raw_query=req.query,
+            short_answer=answer_dict.get("short_answer", ""),
+            answer_json=answer_dict,
+            language=target_lang,
+        )
 
     return {"conversation_id": conv_id, "message_id": bot_msg_id, "answer": answer_dict}
 

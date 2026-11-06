@@ -9,6 +9,7 @@ import { ChatInput } from "@/components/ChatInput";
 import { StageIndicator } from "@/components/StageIndicator";
 import { CitationDrawer } from "@/components/CitationDrawer";
 import { FeedbackModal } from "@/components/FeedbackModal";
+import { AuthModal } from "@/components/AuthModal";
 import { LawBrowser } from "@/components/LawBrowser";
 import { AboutView } from "@/components/AboutView";
 import { HistorySidebar } from "@/components/HistorySidebar";
@@ -28,6 +29,11 @@ export default function Home() {
   const [activeCitationChunkId, setActiveCitationChunkId] = useState<string | null>(null);
   const [feedbackMessageId, setFeedbackMessageId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  // Authentication & Guest Quota (5 free requests per guest)
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [guestQueriesRemaining, setGuestQueriesRemaining] = useState<number>(5);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Backend status & conversations
   const [isBackendConnected, setIsBackendConnected] = useState(true);
@@ -92,6 +98,61 @@ export default function Home() {
     }
   }, [messages, streamingStage, activeView]);
 
+  // Load authentication & quota state from localStorage
+  useEffect(() => {
+    let isMounted = true;
+    Promise.resolve().then(() => {
+      if (!isMounted) return;
+      if (typeof window !== "undefined") {
+        const savedUser = localStorage.getItem("playref_user");
+        if (savedUser) setUserEmail(savedUser);
+
+        const savedQuota = localStorage.getItem("playref_guest_queries");
+        if (savedQuota !== null) {
+          const parsed = parseInt(savedQuota, 10);
+          if (!isNaN(parsed)) setGuestQueriesRemaining(parsed);
+        }
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleLoginSuccess = (email: string) => {
+    setUserEmail(email);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("playref_user", email);
+    }
+    setIsAuthModalOpen(false);
+  };
+
+  const handleSignOut = () => {
+    setUserEmail(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("playref_user");
+    }
+  };
+
+  const handleSendMessage = (text: string) => {
+    // If not logged in and quota reached, prompt login modal
+    if (!userEmail && guestQueriesRemaining <= 0) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    // Decrement guest quota if not logged in
+    if (!userEmail) {
+      const nextQuota = Math.max(0, guestQueriesRemaining - 1);
+      setGuestQueriesRemaining(nextQuota);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("playref_guest_queries", String(nextQuota));
+      }
+    }
+
+    sendMessage(text, null, currentLanguage);
+  };
+
   const handleLanguageChange = (lang: LanguageCode) => {
     setCurrentLanguage(lang);
   };
@@ -107,7 +168,7 @@ export default function Home() {
 
   const handleAskAboutSection = (promptText: string) => {
     setActiveView("chat");
-    sendMessage(promptText, null, currentLanguage);
+    handleSendMessage(promptText);
   };
 
   return (
@@ -123,6 +184,10 @@ export default function Home() {
         isBackendConnected={isBackendConnected}
         onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
         isHistoryOpen={isHistoryOpen}
+        userEmail={userEmail}
+        guestQueriesRemaining={guestQueriesRemaining}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onSignOut={handleSignOut}
       />
 
       {/* History Sidebar */}
@@ -228,7 +293,7 @@ export default function Home() {
                 {/* Suggested Prompts 2x3 Grid */}
                 <SuggestedPrompts
                   currentLanguage={currentLanguage}
-                  onSelectPrompt={(prompt) => sendMessage(prompt, null, currentLanguage)}
+                  onSelectPrompt={(prompt) => handleSendMessage(prompt)}
                 />
               </div>
             ) : (
@@ -241,7 +306,7 @@ export default function Home() {
                       message={msg}
                       language={currentLanguage}
                       onOpenCitation={handleOpenCitation}
-                      onClarifyAnswer={(text) => sendMessage(text, null, currentLanguage)}
+                      onClarifyAnswer={(text) => handleSendMessage(text)}
                       onOpenFeedbackModal={setFeedbackMessageId}
                     />
                   ))}
@@ -271,7 +336,7 @@ export default function Home() {
             >
               <ChatInput
                 language={currentLanguage}
-                onSend={(text) => sendMessage(text, null, currentLanguage)}
+                onSend={handleSendMessage}
                 onStop={stopStreaming}
                 isStreaming={isStreaming}
               />
@@ -299,6 +364,14 @@ export default function Home() {
           const { submitFeedback } = await import("@/lib/api");
           await submitFeedback(data);
         }}
+      />
+
+      {/* Guest Limit & Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        language={currentLanguage}
       />
 
       {/* Mandatory Disclaimer Footer */}

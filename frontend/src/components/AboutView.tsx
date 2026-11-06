@@ -347,3 +347,4 @@ export function AboutView({ language, onNavigate }: AboutViewProps) {
     </div>
   );
 }
+
